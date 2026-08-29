@@ -1,0 +1,43 @@
+name: Update agenda.json
+
+# Draait automatisch elk uur, en is ook handmatig te starten
+# via de "Actions" tab in je GitHub repo (knop "Run workflow").
+on:
+  schedule:
+    - cron: "0 * * * *"   # elk uur, op het hele uur (UTC)
+  workflow_dispatch: {}     # handmatige "Run workflow" knop in GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  update-agenda:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install icalendar requests
+
+      - name: Fetch calendar and build agenda.json
+        env:
+          ICLOUD_ICAL_URL: ${{ secrets.ICLOUD_ICAL_URL }}
+        run: python scripts/update_agenda.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add agenda.json
+          if git diff --cached --quiet; then
+            echo "Geen wijzigingen in agenda.json"
+          else
+            git commit -m "Automatische agenda-update [skip ci]"
+            git push
+          fi
