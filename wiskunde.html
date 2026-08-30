@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Parker Bergman · Wiskunde</title>
+<meta name="description" content="Studiehub voor Wiskunde — Parker Bergman, 5G">
+<style>
+  /* ============================================================
+     TOKENS — kopieer dit blok naar een ander vak en pas alleen
+     --accent / --accent-soft / --vak / --hoofdstuk-titel aan.
+     Voorbeelden:
+       Scheikunde: --accent:#e74c3c; --accent-soft:#e74c3c33;
+       Natuurkunde: --accent:#3498db; --accent-soft:#3498db33;
+       Biologie:    --accent:#2ecc71; --accent-soft:#2ecc7133;
+     ============================================================ */
+  :root{
+    --bg:#0f0f11;
+    --bg-alt:#151517;
+    --card:#1e1e24;
+    --card-border:#2c2c34;
+    --card-border-hover:#3c3c46;
+    --ink:#f2f2f4;
+    --ink-dim:#a6a6b0;
+    --ink-faint:#6c6c78;
+    --accent:#eaeaea;          /* wiskunde: grafiet/wit accent */
+    --accent-soft:#eaeaea1a;
+    --accent-line:#eaeaea55;
+    --danger:#e05d5d;
+    --ok:#4fbf7d;
+    --radius:16px;
+    --radius-sm:10px;
+    --font-display: "Iowan Old Style","Palatino Linotype","Georgia",ui-serif,serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1c1c22 0%, var(--bg) 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100dvh;
+  }
+  ::selection{background:var(--accent-soft); color:var(--ink);}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:6px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+
+  .wrap{max-width:920px; margin:0 auto; padding:0 20px 80px;}
+
+  /* ---------------- HERO ---------------- */
+  .hero{
+    position:relative;
+    padding:56px 20px 40px;
+    overflow:hidden;
+    border-bottom:1px solid var(--card-border);
+    margin-bottom:36px;
+  }
+  .hero-curve{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    opacity:.55;
+    pointer-events:none;
+  }
+  .hero-inner{position:relative; max-width:920px; margin:0 auto;}
+  .hub-back{
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:12.5px; color:var(--ink-faint);
+    text-decoration:none; margin-bottom:18px;
+    transition:color .2s var(--ease);
+  }
+  .hub-back:hover{color:var(--ink);}
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 14px;
+  }
+  .eyebrow::before{content:"f(x) ="; margin-right:8px; color:var(--ink-dim);}
+  h1.name{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:clamp(32px, 7vw, 52px);
+    letter-spacing:-0.01em;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:10px 16px;
+    font-size:14px; color:var(--ink-dim);
+    margin-bottom:34px;
+  }
+  .meta-row span b{color:var(--ink); font-weight:600;}
+  .meta-row .sep{color:var(--ink-faint);}
+  .meta-row a{color:var(--ink); text-decoration:underline; text-decoration-color:var(--card-border-hover); text-underline-offset:3px;}
+  .meta-row a:hover{text-decoration-color:var(--ink);}
+
+  /* ---------------- PIN GATE ---------------- */
+  .pin-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:26px 24px;
+    max-width:420px;
+  }
+  .pin-card p{
+    margin:0 0 16px;
+    font-size:14px;
+    color:var(--ink-dim);
+  }
+  .pin-form{display:flex; gap:10px;}
+  .pin-input{
+    flex:1;
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    color:var(--ink);
+    font-family:var(--font-mono);
+    font-size:20px;
+    letter-spacing:.3em;
+    text-align:center;
+    padding:12px 10px;
+    min-width:0;
+    transition:border-color .2s var(--ease);
+  }
+  .pin-input:focus{border-color:var(--accent-line);}
+  .pin-submit{
+    background:var(--ink);
+    color:#0f0f11;
+    border:none;
+    border-radius:var(--radius-sm);
+    padding:0 20px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:transform .15s var(--ease), opacity .15s var(--ease);
+  }
+  .pin-submit:hover{opacity:.88;}
+  .pin-submit:active{transform:scale(.97);}
+  .pin-error{
+    margin-top:12px;
+    font-size:13px;
+    color:var(--danger);
+    min-height:16px;
+    opacity:0;
+    transition:opacity .2s var(--ease);
+  }
+  .pin-error.show{opacity:1;}
+  .pin-error.shake{animation:shake .35s var(--ease);}
+  @keyframes shake{
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(5px);}
+    60%{transform:translateX(-3px);}
+    80%{transform:translateX(2px);}
+    100%{transform:translateX(0);}
+  }
+
+  /* ---------------- DASHBOARD ---------------- */
+  #dashboard{display:none;}
+  #dashboard.visible{
+    display:block;
+    animation:fadeUp .55s var(--ease);
+  }
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .section-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-label::after{content:""; flex:1; height:1px; background:var(--card-border);}
+  section.block{margin-bottom:40px;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:22px;
+    transition:border-color .2s var(--ease);
+  }
+  .card:hover{border-color:var(--card-border-hover);}
+
+  /* Quick links */
+  .link-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+  }
+  .link-btn{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    padding:16px 18px;
+    text-decoration:none;
+    color:var(--ink);
+    transition:border-color .2s var(--ease), transform .15s var(--ease), background .2s var(--ease);
+  }
+  .link-btn:hover{border-color:var(--card-border-hover); background:var(--bg-alt); transform:translateY(-1px);}
+  .link-btn .lbl{font-weight:600; font-size:14.5px;}
+  .link-btn .sub{display:block; font-size:12px; color:var(--ink-faint); margin-top:2px; font-weight:400;}
+  .link-btn .arrow{color:var(--ink-faint); font-size:16px; flex-shrink:0;}
+
+  /* Hoofdstukken */
+  .chapter-list{list-style:none; margin:0; padding:0; display:grid; gap:8px;}
+  .chapter-list li{
+    display:flex; align-items:baseline; gap:14px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    padding:14px 16px;
+  }
+  .chapter-num{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--ink-faint);
+    flex-shrink:0;
+    min-width:34px;
+  }
+  .chapter-title{font-size:14.5px; color:var(--ink); flex:1;}
+
+  .chapter-item{
+    cursor:pointer;
+    user-select:none;
+    transition:border-color .2s var(--ease), background .2s var(--ease);
+  }
+  .chapter-item:hover{border-color:var(--card-border-hover);}
+  .chapter-item .chapter-check{
+    opacity:0;
+    color:var(--ok);
+    font-weight:700;
+    font-size:15px;
+    transition:opacity .15s var(--ease);
+  }
+  .chapter-item.active{
+    border-color:var(--ok);
+    background:#4fbf7d14;
+  }
+  .chapter-item.active .chapter-num,
+  .chapter-item.active .chapter-title{color:var(--ok);}
+  .chapter-item.active .chapter-check{opacity:1;}
+
+  /* Aankomende afspraken */
+  .agenda-header{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+    flex-wrap:wrap;
+  }
+  .refresh-btn{
+    display:flex; align-items:center; gap:6px;
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    color:var(--ink);
+    border-radius:var(--radius-sm);
+    padding:8px 14px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:border-color .2s var(--ease), transform .15s var(--ease);
+  }
+  .refresh-btn:hover{border-color:var(--card-border-hover);}
+  .refresh-btn:active{transform:scale(.96);}
+  .refresh-btn .refresh-icon{display:inline-block; font-size:14px; transition:transform .4s var(--ease);}
+  .refresh-btn.spinning .refresh-icon{animation:spin .6s linear infinite;}
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .agenda-updated{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--ink-faint);
+    margin:10px 0 16px;
+  }
+  .agenda-updated.err{color:var(--danger);}
+
+  #agenda-list{margin-top:0;}
+  #agenda-list:empty::before{
+    content:"Geen aankomende afspraken gevonden.";
+    display:block;
+    font-size:13.5px;
+    color:var(--ink-faint);
+    padding:10px 2px;
+  }
+  .agenda-item{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--card); border:1px solid var(--card-border);
+    border-radius:var(--radius-sm); padding:12px 14px;
+  }
+  .agenda-item + .agenda-item{margin-top:8px;}
+  .agenda-item .agenda-info{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .agenda-item .agenda-title{font-size:14px; color:var(--ink); font-weight:600; overflow-wrap:anywhere;}
+  .agenda-item .agenda-date{font-size:12px; color:var(--ink-faint); font-family:var(--font-mono);}
+  .agenda-item .agenda-badge{
+    font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--ink-faint); border:1px solid var(--card-border); border-radius:5px;
+    padding:2px 6px; flex-shrink:0;
+  }
+  .agenda-item .agenda-del{
+    background:none; border:1px solid var(--card-border); color:var(--ink-faint);
+    border-radius:8px; width:30px; height:30px; flex-shrink:0; cursor:pointer;
+    font-size:15px; line-height:1; transition:border-color .2s var(--ease), color .2s var(--ease);
+  }
+  .agenda-item .agenda-del:hover{border-color:var(--danger); color:var(--danger);}
+
+  .agenda-manual-toggle{margin-top:16px;}
+  .agenda-manual-toggle summary{
+    cursor:pointer; font-size:13px; color:var(--ink-dim);
+    font-family:var(--font-mono); list-style:none;
+  }
+  .agenda-manual-toggle summary::-webkit-details-marker{display:none;}
+  .agenda-manual-toggle summary:hover{color:var(--ink);}
+
+  /* ABC formule tool */
+  .abc-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .abc-field label{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--ink-faint);
+    margin-bottom:6px;
+  }
+  .abc-field input{
+    width:100%;
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    color:var(--ink);
+    font-size:17px;
+    font-family:var(--font-mono);
+    padding:10px;
+    text-align:center;
+    transition:border-color .2s var(--ease);
+  }
+  .abc-field input:focus{border-color:var(--accent-line);}
+  .abc-result{
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    padding:16px 18px;
+    font-family:var(--font-mono);
+    font-size:14px;
+    line-height:1.9;
+    color:var(--ink-dim);
+  }
+  .abc-result .hl{color:var(--ink); font-weight:600;}
+  .abc-result .ok{color:var(--ok);}
+  .abc-result .no{color:var(--danger);}
+
+  /* Cijfer + notes grid */
+  .split-grid{display:grid; grid-template-columns:1fr; gap:16px;}
+  @media(min-width:720px){.split-grid{grid-template-columns:1fr 1fr;}}
+  .card h3{
+    margin:0 0 4px;
+    font-size:15px;
+    font-weight:600;
+  }
+  .card .card-sub{font-size:12.5px; color:var(--ink-faint); margin:0 0 16px;}
+
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
+  .field-row label{
+    display:block; font-size:11.5px; color:var(--ink-faint); margin-bottom:5px;
+    font-family:var(--font-mono);
+  }
+  .field-row input{
+    width:100%;
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    color:var(--ink);
+    font-size:15px;
+    padding:9px 10px;
+  }
+  .field-row input:focus{border-color:var(--accent-line);}
+  .grade-out{
+    margin-top:14px;
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    padding:14px 16px;
+    font-size:14px;
+    color:var(--ink-dim);
+  }
+  .grade-out .hl{color:var(--ink); font-weight:700; font-size:17px;}
+
+  #notes-area{
+    width:100%;
+    min-height:140px;
+    resize:vertical;
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:14px;
+    padding:12px;
+    line-height:1.6;
+  }
+  #notes-area:focus{border-color:var(--accent-line);}
+  .notes-status{
+    font-size:11.5px;
+    color:var(--ink-faint);
+    margin-top:8px;
+    font-family:var(--font-mono);
+    height:14px;
+  }
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:var(--ink-faint);
+    padding:0 20px 10px;
+  }
+
+  @media(max-width:480px){
+    .abc-grid{grid-template-columns:1fr 1fr 1fr; gap:8px;}
+    .abc-field input{font-size:15px; padding:9px 4px;}
+    .hero{padding:44px 16px 32px;}
+  }
+</style>
+</head>
+<body>
+
+  <header class="hero">
+    <svg class="hero-curve" viewBox="0 0 920 260" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M -20 240 Q 260 -60 460 130 T 940 30" fill="none" stroke="#eaeaea" stroke-width="1.2" opacity="0.5"/>
+      <path d="M -20 200 Q 300 300 460 150 T 940 200" fill="none" stroke="#eaeaea" stroke-width="1" opacity="0.25"/>
+    </svg>
+    <div class="hero-inner">
+      <a href="index.html" class="hub-back">← Hoofdmenu</a>
+      <p class="eyebrow">ax² + bx + c = 0</p>
+      <h1 class="name">Parker Bergman</h1>
+      <div class="meta-row">
+        <span><b>Klas</b> 5G</span>
+        <span class="sep">·</span>
+        <span><b>Vak</b> Wiskunde</span>
+        <span class="sep">·</span>
+        <span><b>E-mail</b> <a href="mailto:el128979@leerling.eligant.nl">el128979@leerling.eligant.nl</a></span>
+      </div>
+
+      <!-- PIN GATE -->
+      <div class="pin-card" id="pin-card">
+        <p>Voer PIN in om studiemateriaal, tools en persoonlijke links te ontgrendelen.</p>
+        <form class="pin-form" id="pin-form" autocomplete="off">
+          <input
+            class="pin-input"
+            id="pin-input"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="8"
+            placeholder="••••"
+            aria-label="PIN code"
+            required
+          >
+          <button class="pin-submit" type="submit">Ontgrendel</button>
+        </form>
+        <p class="pin-error" id="pin-error">Onjuiste PIN. Probeer opnieuw.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="dashboard">
+
+      <!-- A. QUICK LINKS -->
+      <section class="block">
+        <p class="section-label">Snelle links</p>
+        <div class="link-grid">
+          <a class="link-btn" href="https://apps.noordhoff.nl/se/content/book/8d75771e-ea90-447e-84c4-b47c54bc9fa5/ebooks" target="_blank" rel="noopener">
+            <span><span class="lbl">Noordhoff e-books</span><span class="sub">Digitaal lesmateriaal</span></span>
+            <span class="arrow">→</span>
+          </a>
+          <a class="link-btn" href="https://leerling.somtoday.nl/studiewijzer" target="_blank" rel="noopener">
+            <span><span class="lbl">Somtoday</span><span class="sub">Studiewijzer</span></span>
+            <span class="arrow">→</span>
+          </a>
+          <a class="link-btn" id="cal-link" href="webcal://p172-caldav.icloud.com/published/2/MTYzNDc5ODA0MzkxNjM0N9_-1OcZvIWnJCn4CwXkRyIF_7WhnFHvpElqRX1YeYEiO7Nf1mIp0WhtVKTIkMxd3IAN0xZ4CItvsWEv2V32s0c">
+            <span><span class="lbl">Koppel Apple Agenda</span><span class="sub">iCloud kalender-abonnement</span></span>
+            <span class="arrow">→</span>
+          </a>
+          <a class="link-btn" href="mailto:el128979@leerling.eligant.nl">
+            <span><span class="lbl">School e-mail</span><span class="sub">el128979@leerling.eligant.nl</span></span>
+            <span class="arrow">→</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- A2. AANKOMENDE AFSPRAKEN -->
+      <section class="block">
+        <p class="section-label">Aankomende afspraken</p>
+        <div class="card">
+          <div class="agenda-header">
+            <p class="card-sub" style="margin:0;">
+              Gesynchroniseerd vanuit je Apple Agenda — wordt elk uur automatisch bijgewerkt.
+            </p>
+            <button type="button" id="agenda-refresh" class="refresh-btn" aria-label="Ververs agenda">
+              <span class="refresh-icon">↻</span> Ververs
+            </button>
+          </div>
+          <p class="agenda-updated" id="agenda-updated">Nog niet gesynchroniseerd.</p>
+
+          <ul class="chapter-list" id="agenda-list"></ul>
+
+          <details class="agenda-manual-toggle">
+            <summary>+ Eigen afspraak toevoegen (niet in je Apple Agenda)</summary>
+            <div class="field-row" style="grid-template-columns:1fr 1fr auto; margin-top:12px;">
+              <div>
+                <label for="agenda-titel">Titel</label>
+                <input type="text" id="agenda-titel" placeholder="Bijv. toets H10">
+              </div>
+              <div>
+                <label for="agenda-datum">Datum</label>
+                <input type="date" id="agenda-datum">
+              </div>
+              <div style="align-self:end;">
+                <button type="button" id="agenda-add" class="pin-submit" style="height:38px; padding:0 16px;">Toevoegen</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- B. HOOFDSTUKINDEX -->
+      <section class="block">
+        <p class="section-label">Hoofdstukindex</p>
+        <p class="card-sub" style="margin:-6px 0 12px;">Tik op een hoofdstuk om aan te geven waar je mee bezig bent.</p>
+        <ul class="chapter-list" id="chapter-select-list">
+          <li class="chapter-item" data-chapter="H9" role="button" tabindex="0"><span class="chapter-num">H9</span><span class="chapter-title">Exponentiële en logaritmische functies</span><span class="chapter-check">✓</span></li>
+          <li class="chapter-item" data-chapter="H10" role="button" tabindex="0"><span class="chapter-num">H10</span><span class="chapter-title">Meetkunde met vectoren</span><span class="chapter-check">✓</span></li>
+          <li class="chapter-item" data-chapter="H11" role="button" tabindex="0"><span class="chapter-num">H11</span><span class="chapter-title">Integraalrekening</span><span class="chapter-check">✓</span></li>
+          <li class="chapter-item" data-chapter="H12" role="button" tabindex="0"><span class="chapter-num">H12</span><span class="chapter-title">Goniometrische formules</span><span class="chapter-check">✓</span></li>
+        </ul>
+      </section>
+
+      <!-- C. ABC-FORMULE -->
+      <section class="block">
+        <p class="section-label">abc-formule rekenmachine</p>
+        <div class="card">
+          <h3>Los ax² + bx + c = 0 op</h3>
+          <p class="card-sub">Vul a, b en c in — de uitkomst wordt automatisch berekend.</p>
+          <div class="abc-grid">
+            <div class="abc-field">
+              <label for="in-a">a</label>
+              <input type="number" id="in-a" inputmode="decimal" step="any" placeholder="1">
+            </div>
+            <div class="abc-field">
+              <label for="in-b">b</label>
+              <input type="number" id="in-b" inputmode="decimal" step="any" placeholder="0">
+            </div>
+            <div class="abc-field">
+              <label for="in-c">c</label>
+              <input type="number" id="in-c" inputmode="decimal" step="any" placeholder="0">
+            </div>
+          </div>
+          <div class="abc-result" id="abc-result">
+            Vul a, b en c in om te beginnen.
+          </div>
+        </div>
+      </section>
+
+      <!-- D. CIJFERBEREKENAAR + NOTES -->
+      <section class="block">
+        <p class="section-label">Cijfers &amp; notities</p>
+        <div class="split-grid">
+          <div class="card">
+            <h3>Benodigd cijfer</h3>
+            <p class="card-sub">Bereken wat je nodig hebt voor de volgende toets.</p>
+            <div class="field-row">
+              <div>
+                <label for="g-huidig">Huidig gemiddelde</label>
+                <input type="number" id="g-huidig" step="0.1" placeholder="6.5">
+              </div>
+              <div>
+                <label for="g-doel">Doelgemiddelde</label>
+                <input type="number" id="g-doel" step="0.1" placeholder="7.0">
+              </div>
+            </div>
+            <div class="field-row">
+              <div>
+                <label for="g-weging-huidig">Weging tot nu toe</label>
+                <input type="number" id="g-weging-huidig" step="1" placeholder="3">
+              </div>
+              <div>
+                <label for="g-weging-nieuw">Weging volgende toets</label>
+                <input type="number" id="g-weging-nieuw" step="1" placeholder="1">
+              </div>
+            </div>
+            <div class="grade-out" id="grade-out">Vul alle velden in.</div>
+          </div>
+
+          <div class="card">
+            <h3>Quick notes</h3>
+            <p class="card-sub">Wordt lokaal opgeslagen op dit apparaat.</p>
+            <textarea id="notes-area" placeholder="Snelle herinnering, huiswerk, formule..."></textarea>
+            <div class="notes-status" id="notes-status"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>Parker Bergman · 5G · Wiskunde</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- CONFIG ----------------
+     Let op: dit is client-side "beveiliging". Iedereen die de
+     broncode bekijkt (view-source) kan deze PIN aflezen. Gebruik
+     dit als een simpele drempel, niet als echte beveiliging van
+     gevoelige gegevens. */
+  var PIN = "1977";
+  var SESSION_KEY = "studiehub_unlocked"; // gedeeld met biologie.html: 1x ontgrendelen binnen je tab-sessie volstaat
+
+  var pinCard = document.getElementById("pin-card");
+  var pinForm = document.getElementById("pin-form");
+  var pinInput = document.getElementById("pin-input");
+  var pinError = document.getElementById("pin-error");
+  var dashboard = document.getElementById("dashboard");
+
+  function unlock(){
+    pinCard.style.display = "none";
+    dashboard.classList.add("visible");
+    try { sessionStorage.setItem(SESSION_KEY, "true"); } catch(e){}
+  }
+
+  // Herstel ontgrendelstatus binnen deze sessie
+  try {
+    if (sessionStorage.getItem(SESSION_KEY) === "true") {
+      unlock();
+    }
+  } catch(e){}
+
+  pinForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var val = pinInput.value.trim();
+    if (val === PIN) {
+      pinError.classList.remove("show", "shake");
+      unlock();
+    } else {
+      pinError.classList.add("show");
+      pinError.classList.remove("shake");
+      // force reflow zodat de shake-animatie opnieuw kan triggeren
+      void pinError.offsetWidth;
+      pinError.classList.add("shake");
+      pinInput.value = "";
+      pinInput.focus();
+    }
+  });
+
+  /* ---------------- ABC-FORMULE ---------------- */
+  var inA = document.getElementById("in-a");
+  var inB = document.getElementById("in-b");
+  var inC = document.getElementById("in-c");
+  var abcResult = document.getElementById("abc-result");
+
+  function fmt(n){
+    if (Number.isInteger(n)) return String(n);
+    return (Math.round(n * 1000) / 1000).toString();
+  }
+
+  function calcABC(){
+    var a = parseFloat(inA.value);
+    var b = parseFloat(inB.value);
+    var c = parseFloat(inC.value);
+
+    if (isNaN(a) || isNaN(b) || isNaN(c)) {
+      abcResult.innerHTML = "Vul a, b en c in om te beginnen.";
+      return;
+    }
+    if (a === 0) {
+      abcResult.innerHTML = '<span class="no">a mag niet 0 zijn — dit is dan geen tweedegraadsvergelijking.</span>';
+      return;
+    }
+
+    var D = b*b - 4*a*c;
+    var lines = [];
+    lines.push('D = b² − 4ac = <span class="hl">' + fmt(D) + '</span>');
+
+    if (D > 0) {
+      var sqrtD = Math.sqrt(D);
+      var x1 = (-b + sqrtD) / (2*a);
+      var x2 = (-b - sqrtD) / (2*a);
+      lines.push('<span class="ok">D &gt; 0 → twee oplossingen</span>');
+      lines.push('x₁ = (−b + √D) / 2a = <span class="hl">' + fmt(x1) + '</span>');
+      lines.push('x₂ = (−b − √D) / 2a = <span class="hl">' + fmt(x2) + '</span>');
+    } else if (D === 0) {
+      var x = -b / (2*a);
+      lines.push('<span class="ok">D = 0 → één oplossing (dubbele wortel)</span>');
+      lines.push('x = −b / 2a = <span class="hl">' + fmt(x) + '</span>');
+    } else {
+      lines.push('<span class="no">D &lt; 0 → geen reële oplossingen</span>');
+    }
+
+    abcResult.innerHTML = lines.join("<br>");
+  }
+
+  [inA, inB, inC].forEach(function(el){
+    el.addEventListener("input", calcABC);
+  });
+
+  /* ---------------- CIJFERBEREKENAAR ---------------- */
+  var gHuidig = document.getElementById("g-huidig");
+  var gDoel = document.getElementById("g-doel");
+  var gWHuidig = document.getElementById("g-weging-huidig");
+  var gWNieuw = document.getElementById("g-weging-nieuw");
+  var gradeOut = document.getElementById("grade-out");
+
+  function calcGrade(){
+    var huidig = parseFloat(gHuidig.value);
+    var doel = parseFloat(gDoel.value);
+    var wHuidig = parseFloat(gWHuidig.value);
+    var wNieuw = parseFloat(gWNieuw.value);
+
+    if ([huidig, doel, wHuidig, wNieuw].some(isNaN) || wNieuw <= 0) {
+      gradeOut.innerHTML = "Vul alle velden in (weging volgende toets moet groter dan 0 zijn).";
+      return;
+    }
+
+    var totaalW = wHuidig + wNieuw;
+    var benodigd = ((doel * totaalW) - (huidig * wHuidig)) / wNieuw;
+
+    if (benodigd > 10) {
+      gradeOut.innerHTML = 'Je hebt een <span class="hl">' + fmt(benodigd) + '</span> nodig — dat is niet haalbaar met één toets. Overweeg je doelgemiddelde bij te stellen of eerdere cijfers te verbeteren.';
+    } else if (benodigd < 1) {
+      gradeOut.innerHTML = 'Je doelgemiddelde is al gehaald, zelfs met een lage volgende toets (benodigd: <span class="hl">' + fmt(benodigd) + '</span>).';
+    } else {
+      gradeOut.innerHTML = 'Je hebt minimaal een <span class="hl">' + fmt(benodigd) + '</span> nodig voor je volgende toets.';
+    }
+  }
+
+  [gHuidig, gDoel, gWHuidig, gWNieuw].forEach(function(el){
+    el.addEventListener("input", calcGrade);
+  });
+
+  /* ---------------- QUICK NOTES (localStorage) ---------------- */
+  var notesArea = document.getElementById("notes-area");
+  var notesStatus = document.getElementById("notes-status");
+  var NOTES_KEY = "wiskunde_quick_notes";
+  var saveTimeout = null;
+
+  try {
+    var saved = localStorage.getItem(NOTES_KEY);
+    if (saved !== null) notesArea.value = saved;
+  } catch(e){}
+
+  notesArea.addEventListener("input", function(){
+    notesStatus.textContent = "Bezig met opslaan...";
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(function(){
+      try {
+        localStorage.setItem(NOTES_KEY, notesArea.value);
+        notesStatus.textContent = "Opgeslagen ✓";
+        setTimeout(function(){ notesStatus.textContent = ""; }, 1500);
+      } catch(e){
+        notesStatus.textContent = "Opslaan mislukt.";
+      }
+    }, 400);
+  });
+
+  /* ---------------- HOOFDSTUK SELECTIE ---------------- */
+  var CHAPTER_KEY = "wiskunde_actief_hoofdstuk";
+  var chapterItems = document.querySelectorAll(".chapter-item");
+
+  function setActiveChapter(id){
+    chapterItems.forEach(function(item){
+      item.classList.toggle("active", item.getAttribute("data-chapter") === id);
+    });
+    try { localStorage.setItem(CHAPTER_KEY, id); } catch(e){}
+  }
+
+  chapterItems.forEach(function(item){
+    item.addEventListener("click", function(){
+      var current = item.classList.contains("active");
+      setActiveChapter(current ? "" : item.getAttribute("data-chapter"));
+    });
+    item.addEventListener("keydown", function(e){
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        item.click();
+      }
+    });
+  });
+
+  try {
+    var savedChapter = localStorage.getItem(CHAPTER_KEY);
+    if (savedChapter) setActiveChapter(savedChapter);
+  } catch(e){}
+
+  /* ---------------- AANKOMENDE AFSPRAKEN (synced + handmatig) ---------------- */
+  var AGENDA_MANUAL_KEY = "wiskunde_agenda_manual";
+  var AGENDA_JSON_PATH = "agenda.json"; // relatief t.o.v. index.html, gevuld door de GitHub Action
+  var agendaTitel = document.getElementById("agenda-titel");
+  var agendaDatum = document.getElementById("agenda-datum");
+  var agendaAddBtn = document.getElementById("agenda-add");
+  var agendaList = document.getElementById("agenda-list");
+  var agendaUpdated = document.getElementById("agenda-updated");
+  var agendaRefreshBtn = document.getElementById("agenda-refresh");
+
+  var syncedEvents = [];
+  var syncedAt = null;
+
+  function loadManual(){
+    try {
+      var raw = localStorage.getItem(AGENDA_MANUAL_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch(e){ return []; }
+  }
+
+  function saveManual(items){
+    try { localStorage.setItem(AGENDA_MANUAL_KEY, JSON.stringify(items)); } catch(e){}
+  }
+
+  function formatDate(iso){
+    if (!iso) return "";
+    var parts = iso.split("-");
+    if (parts.length !== 3) return iso;
+    return parts[2] + "-" + parts[1] + "-" + parts[0];
+  }
+
+  function timeAgo(isoString){
+    if (!isoString) return null;
+    var then = new Date(isoString).getTime();
+    if (isNaN(then)) return null;
+    var diffMs = Date.now() - then;
+    var mins = Math.round(diffMs / 60000);
+    if (mins < 1) return "zojuist";
+    if (mins < 60) return mins + " min geleden";
+    var hrs = Math.round(mins / 60);
+    if (hrs < 24) return hrs + " uur geleden";
+    var days = Math.round(hrs / 24);
+    return days + " dag" + (days === 1 ? "" : "en") + " geleden";
+  }
+
+  function renderAgenda(){
+    var manual = loadManual();
+    var combined = [];
+
+    syncedEvents.forEach(function(ev){
+      combined.push({
+        title: ev.title,
+        date: ev.date,
+        time: ev.time || null,
+        source: "sync"
+      });
+    });
+    manual.forEach(function(item, idx){
+      combined.push({
+        title: item.title,
+        date: item.date,
+        time: null,
+        source: "manual",
+        manualIndex: idx
+      });
+    });
+
+    combined.sort(function(a, b){
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return (a.date + (a.time || "")).localeCompare(b.date + (b.time || ""));
+    });
+
+    agendaList.innerHTML = "";
+    combined.forEach(function(item){
+      var li = document.createElement("li");
+      li.className = "agenda-item";
+      var dateLabel = item.date ? formatDate(item.date) : "Geen datum";
+      if (item.time) dateLabel += " · " + item.time;
+
+      li.innerHTML =
+        '<span class="agenda-info">' +
+          '<span class="agenda-title"></span>' +
+          '<span class="agenda-date"></span>' +
+        '</span>';
+      li.querySelector(".agenda-title").textContent = item.title;
+      li.querySelector(".agenda-date").textContent = dateLabel;
+
+      if (item.source === "manual") {
+        var delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "agenda-del";
+        delBtn.setAttribute("aria-label", "Verwijder");
+        delBtn.textContent = "×";
+        delBtn.addEventListener("click", function(){
+          var current = loadManual();
+          current.splice(item.manualIndex, 1);
+          saveManual(current);
+          renderAgenda();
+        });
+        li.appendChild(delBtn);
+      } else {
+        var badge = document.createElement("span");
+        badge.className = "agenda-badge";
+        badge.textContent = "Agenda";
+        li.appendChild(badge);
+      }
+
+      agendaList.appendChild(li);
+    });
+  }
+
+  function addManualItem(){
+    var title = agendaTitel.value.trim();
+    if (!title) { agendaTitel.focus(); return; }
+    var items = loadManual();
+    items.push({ title: title, date: agendaDatum.value });
+    saveManual(items);
+    agendaTitel.value = "";
+    agendaDatum.value = "";
+    renderAgenda();
+  }
+
+  agendaAddBtn.addEventListener("click", addManualItem);
+  agendaTitel.addEventListener("keydown", function(e){
+    if (e.key === "Enter") { e.preventDefault(); addManualItem(); }
+  });
+
+  function updateStatusLabel(){
+    if (!syncedAt) {
+      agendaUpdated.textContent = "Nog niet gesynchroniseerd — wacht tot de GitHub Action voor het eerst gedraaid heeft.";
+      agendaUpdated.classList.remove("err");
+      return;
+    }
+    agendaUpdated.textContent = "Laatst bijgewerkt: " + timeAgo(syncedAt);
+    agendaUpdated.classList.remove("err");
+  }
+
+  function fetchAgendaJson(showSpinner){
+    if (showSpinner) agendaRefreshBtn.classList.add("spinning");
+    // cache-bust zodat je altijd de laatst gecommitte versie krijgt, niet een gecachte
+    fetch(AGENDA_JSON_PATH + "?t=" + Date.now())
+      .then(function(res){
+        if (!res.ok) throw new Error("agenda.json niet gevonden (status " + res.status + ")");
+        return res.json();
+      })
+      .then(function(data){
+        syncedEvents = Array.isArray(data.events) ? data.events : [];
+        syncedAt = data.generated_at || null;
+        updateStatusLabel();
+        renderAgenda();
+      })
+      .catch(function(err){
+        agendaUpdated.textContent = "Kon agenda.json niet laden (bestaat 'ie al in je repo?).";
+        agendaUpdated.classList.add("err");
+        renderAgenda();
+      })
+      .finally(function(){
+        if (showSpinner) agendaRefreshBtn.classList.remove("spinning");
+      });
+  }
+
+  agendaRefreshBtn.addEventListener("click", function(){
+    fetchAgendaJson(true);
+  });
+
+  fetchAgendaJson(false);
+
+})();
+</script>
+</body>
+</html>
