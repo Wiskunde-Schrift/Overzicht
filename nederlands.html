@@ -665,14 +665,28 @@
 
   <footer>Parker Bergman · 5G · Nederlands</footer>
 
-<script>
-(function(){
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+var firebaseConfig = {
+  apiKey: "AIzaSyBBfErn7QyWPk6_29NycvsQE3cUnDNnD-c",
+  authDomain: "studiehub-parker.firebaseapp.com",
+  projectId: "studiehub-parker",
+  storageBucket: "studiehub-parker.firebasestorage.app",
+  messagingSenderId: "602226551320",
+  appId: "1:602226551320:web:1908516f24d07c8b76b16d"
+};
+var fbApp = initializeApp(firebaseConfig);
+var db = getFirestore(fbApp);
+var pageDocRef = doc(db, "studiehub", "nederlands");
+
+(async function(){
   "use strict";
 
   /* ---------------- DYSLEXIE-LEESMODUS ----------------
-     Wordt meteen bij het laden toegepast (ook vóór de PIN),
-     zodat ook de naam/hero al in leesvriendelijke stijl staat
-     als de instelling eerder is aangezet. */
+     Blijft bewust lokaal (localStorage) i.p.v. cloud-sync: dit is
+     een weergave-voorkeur per apparaat/scherm, geen studie-data. */
   var DYS_KEY = "nederlands_dyslexie_mode";
   var dysToggleBtn = null; // wordt hieronder gezet zodra dashboard bestaat
 
@@ -688,6 +702,30 @@
   var dysActive = false;
   try { dysActive = localStorage.getItem(DYS_KEY) === "true"; } catch(e){}
   applyDysMode(dysActive);
+
+  /* ---------------- CLOUD SYNC (Firestore) ----------------
+     Voor de rest van de vakken-data: alle vakken-data staat in
+     één document per vak, zodat telefoon en laptop hetzelfde zien. */
+  var cloudData = {};
+  try {
+    var snap = await getDoc(pageDocRef);
+    cloudData = snap.exists() ? snap.data() : {};
+  } catch (e) {
+    cloudData = {};
+  }
+  var cloudSaveTimers = {};
+  function cloudGet(key, fallback){
+    return (key in cloudData) ? cloudData[key] : fallback;
+  }
+  function cloudSet(key, value){
+    cloudData[key] = value;
+    clearTimeout(cloudSaveTimers[key]);
+    cloudSaveTimers[key] = setTimeout(function(){
+      var patch = {};
+      patch[key] = value;
+      setDoc(pageDocRef, patch, { merge: true }).catch(function(){});
+    }, 600);
+  }
 
   /* ---------------- CONFIG ----------------
      Zelfde client-side PIN als op de andere vakpagina's. Geen
@@ -740,7 +778,7 @@
   });
 
   /* ---------------- LEESLIJST ---------------- */
-  var BOEK_KEY = "nederlands_leeslijst";
+  var BOEK_KEY = "leeslijst";
   var boekTitel = document.getElementById("boek-titel");
   var boekAuteur = document.getElementById("boek-auteur");
   var boekAddBtn = document.getElementById("boek-add");
@@ -748,14 +786,11 @@
   var STATUS_LABELS = ["Te lezen", "Bezig", "Uitgelezen"];
 
   function loadBoeken(){
-    try {
-      var raw = localStorage.getItem(BOEK_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(BOEK_KEY, []);
   }
 
   function saveBoeken(items){
-    try { localStorage.setItem(BOEK_KEY, JSON.stringify(items)); } catch(e){}
+    cloudSet(BOEK_KEY, items);
   }
 
   function renderBoeken(){
@@ -837,20 +872,17 @@
   renderBoeken();
 
   /* ---------------- MOEILIJKE WOORDEN & VRAGEN ---------------- */
-  var FOUTEN_KEY = "nederlands_foutenlog";
+  var FOUTEN_KEY = "foutenlog";
   var foutInput = document.getElementById("fout-input");
   var foutAddBtn = document.getElementById("fout-add");
   var foutList = document.getElementById("fout-list");
 
   function loadFouten(){
-    try {
-      var raw = localStorage.getItem(FOUTEN_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(FOUTEN_KEY, []);
   }
 
   function saveFouten(items){
-    try { localStorage.setItem(FOUTEN_KEY, JSON.stringify(items)); } catch(e){}
+    cloudSet(FOUTEN_KEY, items);
   }
 
   function renderFouten(){
@@ -914,30 +946,24 @@
   /* ---------------- QUICK NOTES ---------------- */
   var notesArea = document.getElementById("notes-area");
   var notesStatus = document.getElementById("notes-status");
-  var NOTES_KEY = "nederlands_quick_notes";
+  var NOTES_KEY = "notes";
   var saveTimeout = null;
 
-  try {
-    var saved = localStorage.getItem(NOTES_KEY);
-    if (saved !== null) notesArea.value = saved;
-  } catch(e){}
+  var savedNotes = cloudGet(NOTES_KEY, null);
+  if (savedNotes !== null) notesArea.value = savedNotes;
 
   notesArea.addEventListener("input", function(){
     notesStatus.textContent = "Bezig met opslaan...";
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(function(){
-      try {
-        localStorage.setItem(NOTES_KEY, notesArea.value);
-        notesStatus.textContent = "Opgeslagen ✓";
-        setTimeout(function(){ notesStatus.textContent = ""; }, 1500);
-      } catch(e){
-        notesStatus.textContent = "Opslaan mislukt.";
-      }
+      cloudSet(NOTES_KEY, notesArea.value);
+      notesStatus.textContent = "Opgeslagen ✓";
+      setTimeout(function(){ notesStatus.textContent = ""; }, 1500);
     }, 400);
   });
 
   /* ---------------- AANKOMENDE AFSPRAKEN (synced + handmatig) ---------------- */
-  var AGENDA_MANUAL_KEY = "nederlands_agenda_manual";
+  var AGENDA_MANUAL_KEY = "agendaManual";
   var AGENDA_JSON_PATH = "agenda.json"; // zelfde bestand als de andere vakpagina's, gevuld door de gedeelde GitHub Action
   var agendaTitel = document.getElementById("agenda-titel");
   var agendaDatum = document.getElementById("agenda-datum");
@@ -950,14 +976,11 @@
   var syncedAt = null;
 
   function loadManual(){
-    try {
-      var raw = localStorage.getItem(AGENDA_MANUAL_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(AGENDA_MANUAL_KEY, []);
   }
 
   function saveManual(items){
-    try { localStorage.setItem(AGENDA_MANUAL_KEY, JSON.stringify(items)); } catch(e){}
+    cloudSet(AGENDA_MANUAL_KEY, items);
   }
 
   function formatDate(iso){

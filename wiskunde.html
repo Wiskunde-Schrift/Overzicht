@@ -628,9 +628,48 @@
 
   <footer>Parker Bergman · 5G · Wiskunde</footer>
 
-<script>
-(function(){
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+var firebaseConfig = {
+  apiKey: "AIzaSyBBfErn7QyWPk6_29NycvsQE3cUnDNnD-c",
+  authDomain: "studiehub-parker.firebaseapp.com",
+  projectId: "studiehub-parker",
+  storageBucket: "studiehub-parker.firebasestorage.app",
+  messagingSenderId: "602226551320",
+  appId: "1:602226551320:web:1908516f24d07c8b76b16d"
+};
+var fbApp = initializeApp(firebaseConfig);
+var db = getFirestore(fbApp);
+var pageDocRef = doc(db, "studiehub", "wiskunde");
+
+(async function(){
   "use strict";
+
+  /* ---------------- CLOUD SYNC (Firestore) ----------------
+     Vervangt localStorage: alle vakken-data staat in één document
+     per vak, zodat telefoon en laptop hetzelfde zien. */
+  var cloudData = {};
+  try {
+    var snap = await getDoc(pageDocRef);
+    cloudData = snap.exists() ? snap.data() : {};
+  } catch (e) {
+    cloudData = {};
+  }
+  var cloudSaveTimers = {};
+  function cloudGet(key, fallback){
+    return (key in cloudData) ? cloudData[key] : fallback;
+  }
+  function cloudSet(key, value){
+    cloudData[key] = value;
+    clearTimeout(cloudSaveTimers[key]);
+    cloudSaveTimers[key] = setTimeout(function(){
+      var patch = {};
+      patch[key] = value;
+      setDoc(pageDocRef, patch, { merge: true }).catch(function(){});
+    }, 600);
+  }
 
   /* ---------------- CONFIG ----------------
      Let op: dit is client-side "beveiliging". Iedereen die de
@@ -761,40 +800,34 @@
     el.addEventListener("input", calcGrade);
   });
 
-  /* ---------------- QUICK NOTES (localStorage) ---------------- */
+  /* ---------------- QUICK NOTES (cloud) ---------------- */
   var notesArea = document.getElementById("notes-area");
   var notesStatus = document.getElementById("notes-status");
-  var NOTES_KEY = "wiskunde_quick_notes";
+  var NOTES_KEY = "notes";
   var saveTimeout = null;
 
-  try {
-    var saved = localStorage.getItem(NOTES_KEY);
-    if (saved !== null) notesArea.value = saved;
-  } catch(e){}
+  var savedNotes = cloudGet(NOTES_KEY, null);
+  if (savedNotes !== null) notesArea.value = savedNotes;
 
   notesArea.addEventListener("input", function(){
     notesStatus.textContent = "Bezig met opslaan...";
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(function(){
-      try {
-        localStorage.setItem(NOTES_KEY, notesArea.value);
-        notesStatus.textContent = "Opgeslagen ✓";
-        setTimeout(function(){ notesStatus.textContent = ""; }, 1500);
-      } catch(e){
-        notesStatus.textContent = "Opslaan mislukt.";
-      }
+      cloudSet(NOTES_KEY, notesArea.value);
+      notesStatus.textContent = "Opgeslagen ✓";
+      setTimeout(function(){ notesStatus.textContent = ""; }, 1500);
     }, 400);
   });
 
   /* ---------------- HOOFDSTUK SELECTIE ---------------- */
-  var CHAPTER_KEY = "wiskunde_actief_hoofdstuk";
+  var CHAPTER_KEY = "chapter";
   var chapterItems = document.querySelectorAll(".chapter-item");
 
   function setActiveChapter(id){
     chapterItems.forEach(function(item){
       item.classList.toggle("active", item.getAttribute("data-chapter") === id);
     });
-    try { localStorage.setItem(CHAPTER_KEY, id); } catch(e){}
+    cloudSet(CHAPTER_KEY, id);
   }
 
   chapterItems.forEach(function(item){
@@ -810,13 +843,11 @@
     });
   });
 
-  try {
-    var savedChapter = localStorage.getItem(CHAPTER_KEY);
-    if (savedChapter) setActiveChapter(savedChapter);
-  } catch(e){}
+  var savedChapter = cloudGet(CHAPTER_KEY, null);
+  if (savedChapter) setActiveChapter(savedChapter);
 
   /* ---------------- AANKOMENDE AFSPRAKEN (synced + handmatig) ---------------- */
-  var AGENDA_MANUAL_KEY = "wiskunde_agenda_manual";
+  var AGENDA_MANUAL_KEY = "agendaManual";
   var AGENDA_JSON_PATH = "agenda.json"; // relatief t.o.v. index.html, gevuld door de GitHub Action
   var agendaTitel = document.getElementById("agenda-titel");
   var agendaDatum = document.getElementById("agenda-datum");
@@ -829,14 +860,11 @@
   var syncedAt = null;
 
   function loadManual(){
-    try {
-      var raw = localStorage.getItem(AGENDA_MANUAL_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(AGENDA_MANUAL_KEY, []);
   }
 
   function saveManual(items){
-    try { localStorage.setItem(AGENDA_MANUAL_KEY, JSON.stringify(items)); } catch(e){}
+    cloudSet(AGENDA_MANUAL_KEY, items);
   }
 
   function formatDate(iso){

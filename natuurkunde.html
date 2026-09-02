@@ -743,9 +743,48 @@
 
   <footer>Parker Bergman · 5G · Natuurkunde</footer>
 
-<script>
-(function(){
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+var firebaseConfig = {
+  apiKey: "AIzaSyBBfErn7QyWPk6_29NycvsQE3cUnDNnD-c",
+  authDomain: "studiehub-parker.firebaseapp.com",
+  projectId: "studiehub-parker",
+  storageBucket: "studiehub-parker.firebasestorage.app",
+  messagingSenderId: "602226551320",
+  appId: "1:602226551320:web:1908516f24d07c8b76b16d"
+};
+var fbApp = initializeApp(firebaseConfig);
+var db = getFirestore(fbApp);
+var pageDocRef = doc(db, "studiehub", "natuurkunde");
+
+(async function(){
   "use strict";
+
+  /* ---------------- CLOUD SYNC (Firestore) ----------------
+     Vervangt localStorage: alle vakken-data staat in één document
+     per vak, zodat telefoon en laptop hetzelfde zien. */
+  var cloudData = {};
+  try {
+    var snap = await getDoc(pageDocRef);
+    cloudData = snap.exists() ? snap.data() : {};
+  } catch (e) {
+    cloudData = {};
+  }
+  var cloudSaveTimers = {};
+  function cloudGet(key, fallback){
+    return (key in cloudData) ? cloudData[key] : fallback;
+  }
+  function cloudSet(key, value){
+    cloudData[key] = value;
+    clearTimeout(cloudSaveTimers[key]);
+    cloudSaveTimers[key] = setTimeout(function(){
+      var patch = {};
+      patch[key] = value;
+      setDoc(pageDocRef, patch, { merge: true }).catch(function(){});
+    }, 600);
+  }
 
   /* ---------------- CONFIG ----------------
      Zelfde client-side PIN als op de andere vakpagina's. Geen
@@ -788,18 +827,15 @@
   });
 
   /* ---------------- THEMA TRACKER (multi-toggle) ---------------- */
-  var THEMA_KEY = "natuurkunde_thema_status";
+  var THEMA_KEY = "thema";
   var themaItems = document.querySelectorAll("#thema-list .chapter-item");
 
   function loadThemaStatus(){
-    try {
-      var raw = localStorage.getItem(THEMA_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(THEMA_KEY, []);
   }
 
   function saveThemaStatus(list){
-    try { localStorage.setItem(THEMA_KEY, JSON.stringify(list)); } catch(e){}
+    cloudSet(THEMA_KEY, list);
   }
 
   function applyThemaStatus(){
@@ -879,7 +915,7 @@
   applyConvLabels();
 
   /* ---------------- BINAS LEGENDA (vaste inhoud + eigen aanvullingen) ---------------- */
-  var BINAS_KEY = "natuurkunde_binas_manual";
+  var BINAS_KEY = "binasManual";
   var binasThema = document.getElementById("binas-thema");
   var binasTabel = document.getElementById("binas-tabel");
   var binasNote = document.getElementById("binas-note");
@@ -890,14 +926,11 @@
   var binasNoResults = document.getElementById("binas-no-results");
 
   function loadBinasManual(){
-    try {
-      var raw = localStorage.getItem(BINAS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(BINAS_KEY, []);
   }
 
   function saveBinasManual(items){
-    try { localStorage.setItem(BINAS_KEY, JSON.stringify(items)); } catch(e){}
+    cloudSet(BINAS_KEY, items);
   }
 
   function renderBinasManual(query){
@@ -999,20 +1032,17 @@
   renderBinasManual("");
 
   /* ---------------- FOUTENLOGBOEK ---------------- */
-  var FOUTEN_KEY = "natuurkunde_foutenlog";
+  var FOUTEN_KEY = "foutenlog";
   var foutInput = document.getElementById("fout-input");
   var foutAddBtn = document.getElementById("fout-add");
   var foutList = document.getElementById("fout-list");
 
   function loadFouten(){
-    try {
-      var raw = localStorage.getItem(FOUTEN_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(FOUTEN_KEY, []);
   }
 
   function saveFouten(items){
-    try { localStorage.setItem(FOUTEN_KEY, JSON.stringify(items)); } catch(e){}
+    cloudSet(FOUTEN_KEY, items);
   }
 
   function renderFouten(){
@@ -1076,30 +1106,24 @@
   /* ---------------- QUICK NOTES ---------------- */
   var notesArea = document.getElementById("notes-area");
   var notesStatus = document.getElementById("notes-status");
-  var NOTES_KEY = "natuurkunde_quick_notes";
+  var NOTES_KEY = "notes";
   var saveTimeout = null;
 
-  try {
-    var saved = localStorage.getItem(NOTES_KEY);
-    if (saved !== null) notesArea.value = saved;
-  } catch(e){}
+  var savedNotes = cloudGet(NOTES_KEY, null);
+  if (savedNotes !== null) notesArea.value = savedNotes;
 
   notesArea.addEventListener("input", function(){
     notesStatus.textContent = "Bezig met opslaan...";
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(function(){
-      try {
-        localStorage.setItem(NOTES_KEY, notesArea.value);
-        notesStatus.textContent = "Opgeslagen ✓";
-        setTimeout(function(){ notesStatus.textContent = ""; }, 1500);
-      } catch(e){
-        notesStatus.textContent = "Opslaan mislukt.";
-      }
+      cloudSet(NOTES_KEY, notesArea.value);
+      notesStatus.textContent = "Opgeslagen ✓";
+      setTimeout(function(){ notesStatus.textContent = ""; }, 1500);
     }, 400);
   });
 
   /* ---------------- AANKOMENDE AFSPRAKEN (synced + handmatig) ---------------- */
-  var AGENDA_MANUAL_KEY = "natuurkunde_agenda_manual";
+  var AGENDA_MANUAL_KEY = "agendaManual";
   var AGENDA_JSON_PATH = "agenda.json"; // zelfde bestand als de andere vakpagina's, gevuld door de gedeelde GitHub Action
   var agendaTitel = document.getElementById("agenda-titel");
   var agendaDatum = document.getElementById("agenda-datum");
@@ -1112,14 +1136,11 @@
   var syncedAt = null;
 
   function loadManual(){
-    try {
-      var raw = localStorage.getItem(AGENDA_MANUAL_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e){ return []; }
+    return cloudGet(AGENDA_MANUAL_KEY, []);
   }
 
   function saveManual(items){
-    try { localStorage.setItem(AGENDA_MANUAL_KEY, JSON.stringify(items)); } catch(e){}
+    cloudSet(AGENDA_MANUAL_KEY, items);
   }
 
   function formatDate(iso){
