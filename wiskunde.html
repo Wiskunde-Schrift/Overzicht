@@ -263,6 +263,24 @@
   .chapter-item.active .chapter-title{color:var(--ok);}
   .chapter-item.active .chapter-check{opacity:1;}
 
+  /* Planning */
+  .plan-week-title{
+    font-size:12.5px; font-weight:700; color:var(--ink-dim);
+    font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.06em;
+    margin:18px 0 8px;
+  }
+  .plan-week-title:first-child{margin-top:0;}
+  .plan-btn{
+    font-family:var(--font-mono); font-size:10px; font-weight:700;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid var(--card-border); background:none; color:var(--ink-faint);
+    cursor:pointer; white-space:nowrap;
+    transition:border-color .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
+  }
+  .plan-btn:hover{border-color:var(--card-border-hover);}
+  .plan-btn.done{background:var(--ok); border-color:var(--ok); color:#0f0f11;}
+  .plan-btn.moeilijk{background:#e0a13d; border-color:#e0a13d; color:#0f0f11;}
+
   /* Aankomende afspraken */
   .agenda-header{
     display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
@@ -558,6 +576,16 @@
         </ul>
       </section>
 
+      <!-- B2. PLANNING (uit studiewijzer) -->
+      <section class="block">
+        <p class="section-label">Planning</p>
+        <div class="card">
+          <h3>Studiewijzer voortgang</h3>
+          <p class="card-sub">Uit je studiewijzer Wiskunde B. Groen = gedaan, oranje = moeilijk gevonden — beide los aan te zetten.</p>
+          <div id="plan-container"></div>
+        </div>
+      </section>
+
       <!-- C. ABC-FORMULE -->
       <section class="block">
         <p class="section-label">abc-formule rekenmachine</p>
@@ -845,6 +873,92 @@ var pageDocRef = doc(db, "studiehub", "wiskunde");
 
   var savedChapter = cloudGet(CHAPTER_KEY, null);
   if (savedChapter) setActiveChapter(savedChapter);
+
+  /* ---------------- PLANNING (uit studiewijzer) ---------------- */
+  var PLAN_KEY = "planning";
+  var planContainer = document.getElementById("plan-container");
+  var PLANNING_DATA = [
+    { week: "Week 36", items: ["8.1AB"] },
+    { week: "Week 37", items: ["8.1C", "8.1D", "8.2AB"] },
+    { week: "Week 38", items: ["8.2C", "8.2DE", "8.3A"] },
+    { week: "Week 39", items: ["8.3B", "8.3CD", "8.4A"] },
+    { week: "Week 40", items: ["8.4B"] },
+    { week: "Week 41", items: ["Toetsvoorbereiding H8", "Toets H8"] },
+    { week: "Week 42", items: ["9.1A", "9.1B", "9.1C"] },
+    { week: "Week 44", items: ["9.2A", "9.2B", "9.3A"] },
+    { week: "Week 45", items: ["9.3B", "9.4AB"] },
+    { week: "Week 46", items: ["9.4C", "9.5A"] },
+    { week: "Week 47", items: ["9.5B", "Toetsvoorbereiding H9"] },
+    { week: "Week 48", items: ["11.1A", "11.1B", "11.1C"] },
+    { week: "Week 49", items: ["11.2A", "11.2B"] },
+    { week: "Week 50", items: ["Toetsvoorbereiding", "Toets H9"] }
+  ];
+
+  function loadPlanState(){ return cloudGet(PLAN_KEY, {}); }
+  function savePlanState(state){ cloudSet(PLAN_KEY, state); }
+
+  function renderPlanning(){
+    var state = loadPlanState();
+    planContainer.innerHTML = "";
+    PLANNING_DATA.forEach(function(group, wIdx){
+      var h = document.createElement("p");
+      h.className = "plan-week-title";
+      h.textContent = group.week;
+      planContainer.appendChild(h);
+
+      var ul = document.createElement("ul");
+      ul.className = "chapter-list";
+      group.items.forEach(function(label, iIdx){
+        var id = wIdx + "-" + iIdx;
+        var st = state[id] || {};
+        var li = document.createElement("li");
+        li.className = "agenda-item";
+
+        var info = document.createElement("span");
+        info.className = "agenda-info";
+        var t = document.createElement("span");
+        t.className = "agenda-title";
+        t.textContent = label;
+        info.appendChild(t);
+        li.appendChild(info);
+
+        var toggles = document.createElement("span");
+        toggles.style.cssText = "display:flex; gap:6px; flex-shrink:0;";
+
+        var doneBtn = document.createElement("button");
+        doneBtn.type = "button";
+        doneBtn.className = "plan-btn" + (st.done ? " done" : "");
+        doneBtn.textContent = "Gedaan";
+        doneBtn.addEventListener("click", function(){
+          var s = loadPlanState();
+          s[id] = s[id] || {};
+          s[id].done = !s[id].done;
+          savePlanState(s);
+          renderPlanning();
+        });
+        toggles.appendChild(doneBtn);
+
+        var hardBtn = document.createElement("button");
+        hardBtn.type = "button";
+        hardBtn.className = "plan-btn" + (st.moeilijk ? " moeilijk" : "");
+        hardBtn.textContent = "Moeilijk";
+        hardBtn.addEventListener("click", function(){
+          var s = loadPlanState();
+          s[id] = s[id] || {};
+          s[id].moeilijk = !s[id].moeilijk;
+          savePlanState(s);
+          renderPlanning();
+        });
+        toggles.appendChild(hardBtn);
+
+        li.appendChild(toggles);
+        ul.appendChild(li);
+      });
+      planContainer.appendChild(ul);
+    });
+  }
+
+  renderPlanning();
 
   /* ---------------- AANKOMENDE AFSPRAKEN (synced + handmatig) ---------------- */
   var AGENDA_MANUAL_KEY = "agendaManual";
