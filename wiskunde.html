@@ -597,7 +597,7 @@
         <p class="section-label">Planning</p>
         <div class="card">
           <h3>Studiewijzer voortgang</h3>
-          <p class="card-sub">Uit je studiewijzer Wiskunde B, per opgave. Tik een opgave aan om te wisselen: neutraal → gedaan (groen) → moeilijk (oranje).</p>
+          <p class="card-sub">Alleen de verplichte opgaven (niet de moeilijk/al-snap-je-'t varianten). Tik een opgave aan om te wisselen: neutraal → gedaan (groen) → moeilijk (oranje).</p>
           <div id="plan-container"></div>
         </div>
       </section>
@@ -894,36 +894,36 @@ var pageDocRef = doc(db, "studiehub", "wiskunde");
   var PLAN_KEY = "planning";
   var planContainer = document.getElementById("plan-container");
   var PLANNING_DATA = [
-    { label: "Week 36 — 8.1AB", opgaven: ["2","3","4","A5","7","A8"] },
-    { label: "Week 37 — 8.1C", opgaven: ["10","11","12","13","14","A15","E16"] },
-    { label: "Week 37 — 8.1D", opgaven: ["19","20","21","A22"] },
-    { label: "Week 37 — 8.2AB", opgaven: ["24","27","28","29","A30","A31"] },
-    { label: "Week 38 — 8.2C", opgaven: ["34","35","36","37","A38","A39"] },
-    { label: "Week 38 — 8.2DE", opgaven: ["41","A42","44","45","A46","E47"] },
-    { label: "Week 38 — 8.3A", opgaven: ["50","51","A52","A53","A54"] },
-    { label: "Week 39 — 8.3B", opgaven: ["56","57","58","A59","A60","A61","A62"] },
-    { label: "Week 39 — 8.3CD", opgaven: ["64","65","66","70","71","72","73","74","A65","A66","A73","A74"] },
+    { label: "Week 36 — 8.1AB", opgaven: ["4","A5","7","A8"] },
+    { label: "Week 37 — 8.1C", opgaven: ["10","11","12","A15"] },
+    { label: "Week 37 — 8.1D", opgaven: ["21","A22"] },
+    { label: "Week 37 — 8.2AB", opgaven: ["24","27","28","29","A30"] },
+    { label: "Week 38 — 8.2C", opgaven: ["36","37","A38"] },
+    { label: "Week 38 — 8.2DE", opgaven: ["41","A42","45","A46"] },
+    { label: "Week 38 — 8.3A", opgaven: ["A52","A53"] },
+    { label: "Week 39 — 8.3B", opgaven: ["57","58","A59","A60","A61"] },
+    { label: "Week 39 — 8.3CD", opgaven: ["A65","70","A73"] },
     { label: "Week 39 — 8.4A", opgaven: ["77","78","79","A80"] },
-    { label: "Week 40 — 8.4B", opgaven: ["82","83","84","85","A86","A87","A88","A89","A90","A91"] },
+    { label: "Week 40 — 8.4B", opgaven: ["84","85","A86","A87","A88","A89"] },
     { label: "Week 41 — Toetsvoorbereiding H8", opgaven: ["Toetsvoorbereiding"] },
     { label: "Week 41 — Toets H8", opgaven: ["Toets H8"] },
-    { label: "Week 42 — 9.1A", opgaven: ["3","V1","V2","A4","E5"] },
-    { label: "Week 42 — 9.1B", opgaven: ["V3","V4","7","8","9","A10","11","A12","A13"] },
-    { label: "Week 42 — 9.1C", opgaven: ["15","16","17","A18","A19"] },
-    { label: "Week 44 — 9.2A", opgaven: ["22","23","24","25","A26","A27","A28"] },
-    { label: "Week 44 — 9.2B", opgaven: ["30","A31","A32"] },
-    { label: "Week 44 — 9.3A", opgaven: ["35","37","38","39","40","A36","A41","A42"] },
-    { label: "Week 45 — 9.3B", opgaven: ["45","A46","A47","A48","A49","E50"] },
-    { label: "Week 45 — 9.4AB", opgaven: ["54","56","A55","A57","E58"] },
-    { label: "Week 46 — 9.4C", opgaven: ["61","62","63","64","65","A66","A67","A68","A69"] },
-    { label: "Week 46 — 9.5A", opgaven: ["71","72","73","74","A75","A76"] },
-    { label: "Week 47 — 9.5B", opgaven: ["79","80","81","82","83","84","A85","A86","A87","A88","E89"] },
+    { label: "Week 42 — 9.1A", opgaven: ["V1","V2","A4"] },
+    { label: "Week 42 — 9.1B", opgaven: ["V3","V4","7","9","A10","11","A12"] },
+    { label: "Week 42 — 9.1C", opgaven: ["16","17"] },
+    { label: "Week 44 — 9.2A", opgaven: ["24","25","A26","A27"] },
+    { label: "Week 44 — 9.2B", opgaven: ["A31"] },
+    { label: "Week 44 — 9.3A", opgaven: ["A36","37","39","A41"] },
+    { label: "Week 45 — 9.3B", opgaven: ["A46","A47"] },
+    { label: "Week 45 — 9.4AB", opgaven: ["A55","A57"] },
+    { label: "Week 46 — 9.4C", opgaven: ["62","63","65","A67"] },
+    { label: "Week 46 — 9.5A", opgaven: ["74","A75","A76"] },
+    { label: "Week 47 — 9.5B", opgaven: ["79","80","81","82","84","A85","A86","A87"] },
     { label: "Week 47 — Toetsvoorbereiding H9", opgaven: ["Toetsvoorbereiding"] },
-    { label: "Week 48 — 11.1A", opgaven: ["2","3","4","V1","V2"] },
-    { label: "Week 48 — 11.1B", opgaven: ["6","8","9","A10","A11","12","A13","A14"] },
-    { label: "Week 48 — 11.1C", opgaven: ["16","17","18","19","A20","A21"] },
-    { label: "Week 49 — 11.2A", opgaven: ["23","24","25","26","27","A28","A29","A30"] },
-    { label: "Week 49 — 11.2B", opgaven: ["34","35","36","37","38","39","40"] },
+    { label: "Week 48 — 11.1A", opgaven: ["V1","V2","3"] },
+    { label: "Week 48 — 11.1B", opgaven: ["6","A10","12","A13"] },
+    { label: "Week 48 — 11.1C", opgaven: ["17","18","19","A20"] },
+    { label: "Week 49 — 11.2A", opgaven: ["23","24","26","27","A28","A29"] },
+    { label: "Week 49 — 11.2B", opgaven: ["36","37","38","39"] },
     { label: "Week 50 — Toetsvoorbereiding", opgaven: ["Toetsvoorbereiding"] },
     { label: "Week 50 — Toets H9", opgaven: ["Toets H9"] }
   ];
