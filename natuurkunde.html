@@ -651,7 +651,7 @@
         <p class="section-label">Planning</p>
         <div class="card">
           <h3>H7 Trillingen en golven — voortgang</h3>
-          <p class="card-sub">Uit je hoofdstukplanner, per opgave. Tik een opgave aan om te wisselen: neutraal → gedaan (groen) → moeilijk (oranje).</p>
+          <p class="card-sub">Alleen de hoofdroute (niet ondersteuning/verdieping). Tik een opgave aan om te wisselen: neutraal → gedaan (groen) → moeilijk (oranje).</p>
           <div id="plan-container"></div>
         </div>
       </section>
@@ -869,13 +869,13 @@ var pageDocRef = doc(db, "studiehub", "natuurkunde");
   var PLAN_KEY = "planning";
   var planContainer = document.getElementById("plan-container");
   var PLANNING_DATA = [
-    { label: "7.1 Geluid, trillingen en zuivere tonen — Begrijpen (A)", opgaven: ["1","2","3","4","5","6","7","8","9"] },
-    { label: "7.1 Geluid, trillingen en zuivere tonen — Beheersen (B)", opgaven: ["10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27"] },
-    { label: "7.2 Lopende golven — Begrijpen (C)", opgaven: ["28","29","30","31","32","33","34"] },
-    { label: "7.2 Lopende golven — Beheersen (D)", opgaven: ["35","36","37","38","39","40","42","43","44","45","46","47","48"] },
-    { label: "7.3 Staande golven — Begrijpen (E)", opgaven: ["49","50","51","52","53","54","55","56","57","58","59","60"] },
-    { label: "7.3 Staande golven — Beheersen (F)", opgaven: ["61","62","63","64","65","66","67","68","69","70","71","72"] },
-    { label: "7.5 Afsluiten — Eindopgaven (G)", opgaven: ["76","77","78","79","80","81","82"] },
+    { label: "7.1 Geluid, trillingen en zuivere tonen — Begrijpen (A)", opgaven: ["5","6","7","8","9"] },
+    { label: "7.1 Geluid, trillingen en zuivere tonen — Beheersen (B)", opgaven: ["10","12","13","14","15","17","18","21","25","27"] },
+    { label: "7.2 Lopende golven — Begrijpen (C)", opgaven: ["30","32","33","34"] },
+    { label: "7.2 Lopende golven — Beheersen (D)", opgaven: ["35","37","38","39","42","43","44","47","48"] },
+    { label: "7.3 Staande golven — Begrijpen (E)", opgaven: ["51","52","55","56","57","60"] },
+    { label: "7.3 Staande golven — Beheersen (F)", opgaven: ["61","66","67","68","69","71","72"] },
+    { label: "7.5 Afsluiten — Eindopgaven (G)", opgaven: ["79","80","81"] },
     { label: "7.5 Afsluiten — Uitloop/oefentoets (H)", opgaven: ["Uitloop/oefentoets"] },
     { label: "Toetsweek", opgaven: ["Toets","Toets nabespreken"] }
   ];
