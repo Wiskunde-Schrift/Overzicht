@@ -264,6 +264,27 @@
   .chapter-item.active .chapter-check{opacity:1;}
 
   /* Planning */
+  /* Week-divider: titel + voortgang, staat boven elke week z'n paragraaf-groepen */
+  .plan-week-divider{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    padding:10px 2px 6px;
+    margin-top:18px;
+    border-bottom:2px solid var(--accent-line);
+  }
+  .plan-week-divider:first-child{margin-top:0;}
+  .plan-week-title{
+    font-size:14px; font-weight:800; letter-spacing:.02em;
+    color:var(--ink); text-transform:uppercase;
+  }
+  .plan-week-count{
+    font-family:var(--font-mono); font-size:12px; font-weight:600;
+    color:var(--ink-faint);
+    padding:3px 9px; border-radius:999px;
+    background:var(--bg-alt); border:1px solid var(--card-border);
+  }
+  .plan-week-divider.complete .plan-week-count{
+    background:var(--ok); border-color:var(--ok); color:#0f0f11;
+  }
   /* Planning (inklapbare groepen met opgave-chips) */
   .binas-cat{
     border:1px solid var(--card-border);
@@ -894,47 +915,93 @@ var pageDocRef = doc(db, "studiehub", "wiskunde");
   var PLAN_KEY = "planning";
   var planContainer = document.getElementById("plan-container");
   var PLANNING_DATA = [
-    { label: "Week 36 — 8.1AB", opgaven: ["4","A5","7","A8"] },
-    { label: "Week 37 — 8.1C", opgaven: ["10","11","12","A15"] },
-    { label: "Week 37 — 8.1D", opgaven: ["21","A22"] },
-    { label: "Week 37 — 8.2AB", opgaven: ["24","27","28","29","A30"] },
-    { label: "Week 38 — 8.2C", opgaven: ["36","37","A38"] },
-    { label: "Week 38 — 8.2DE", opgaven: ["41","A42","45","A46"] },
-    { label: "Week 38 — 8.3A", opgaven: ["A52","A53"] },
-    { label: "Week 39 — 8.3B", opgaven: ["57","58","A59","A60","A61"] },
-    { label: "Week 39 — 8.3CD", opgaven: ["A65","70","A73"] },
-    { label: "Week 39 — 8.4A", opgaven: ["77","78","79","A80"] },
-    { label: "Week 40 — 8.4B", opgaven: ["84","85","A86","A87","A88","A89"] },
-    { label: "Week 41 — Toetsvoorbereiding H8", opgaven: ["Toetsvoorbereiding"] },
-    { label: "Week 41 — Toets H8", opgaven: ["Toets H8"] },
-    { label: "Week 42 — 9.1A", opgaven: ["V1","V2","A4"] },
-    { label: "Week 42 — 9.1B", opgaven: ["V3","V4","7","9","A10","11","A12"] },
-    { label: "Week 42 — 9.1C", opgaven: ["16","17"] },
-    { label: "Week 44 — 9.2A", opgaven: ["24","25","A26","A27"] },
-    { label: "Week 44 — 9.2B", opgaven: ["A31"] },
-    { label: "Week 44 — 9.3A", opgaven: ["A36","37","39","A41"] },
-    { label: "Week 45 — 9.3B", opgaven: ["A46","A47"] },
-    { label: "Week 45 — 9.4AB", opgaven: ["A55","A57"] },
-    { label: "Week 46 — 9.4C", opgaven: ["62","63","65","A67"] },
-    { label: "Week 46 — 9.5A", opgaven: ["74","A75","A76"] },
-    { label: "Week 47 — 9.5B", opgaven: ["79","80","81","82","84","A85","A86","A87"] },
-    { label: "Week 47 — Toetsvoorbereiding H9", opgaven: ["Toetsvoorbereiding"] },
-    { label: "Week 48 — 11.1A", opgaven: ["V1","V2","3"] },
-    { label: "Week 48 — 11.1B", opgaven: ["6","A10","12","A13"] },
-    { label: "Week 48 — 11.1C", opgaven: ["17","18","19","A20"] },
-    { label: "Week 49 — 11.2A", opgaven: ["23","24","26","27","A28","A29"] },
-    { label: "Week 49 — 11.2B", opgaven: ["36","37","38","39"] },
-    { label: "Week 50 — Toetsvoorbereiding", opgaven: ["Toetsvoorbereiding"] },
-    { label: "Week 50 — Toets H9", opgaven: ["Toets H9"] }
+    { week: "36", label: "8.1AB", opgaven: ["4","A5","7","A8","3"] },
+    { week: "37", label: "8.1C", opgaven: ["10","11","12","A15"] },
+    { week: "37", label: "8.1D", opgaven: ["21","A22"] },
+    { week: "37", label: "8.2AB", opgaven: ["24","27","28","29","A30","A31"] },
+    { week: "38", label: "8.2C", opgaven: ["36","37","A38","A39"] },
+    { week: "38", label: "8.2DE", opgaven: ["41","A42","45","A46"] },
+    { week: "38", label: "8.3A", opgaven: ["A52","A53"] },
+    { week: "39", label: "8.3B", opgaven: ["57","58","A59","A60","A61"] },
+    { week: "39", label: "8.3CD", opgaven: ["A65","70","A73"] },
+    { week: "39", label: "8.4A", opgaven: ["77","78","79","A80"] },
+    { week: "40", label: "8.4B", opgaven: ["84","85","A86","A87","A88","A89","A90","A91"] },
+    { week: "40", label: "Toetsvoorbereiding H8", opgaven: ["Toetsvoorbereiding"] },
+    { week: "41", label: "Toetsvoorbereiding H8", opgaven: ["Toetsvoorbereiding"] },
+    { week: "41", label: "Toets H8", opgaven: ["Toets H8"] },
+    { week: "42", label: "9.1A", opgaven: ["V1","V2","A4"] },
+    { week: "42", label: "9.1B", opgaven: ["V3","V4","7","9","A10","11","A12","A13"] },
+    { week: "42", label: "9.1C", opgaven: ["16","17","A19"] },
+    { week: "44", label: "9.2A", opgaven: ["24","25","A26","A27"] },
+    { week: "44", label: "9.2B", opgaven: ["A31"] },
+    { week: "44", label: "9.3A", opgaven: ["A36","37","39","A41"] },
+    { week: "45", label: "9.3B", opgaven: ["A46","A47"] },
+    { week: "45", label: "9.4AB", opgaven: ["A55","A57"] },
+    { week: "46", label: "9.4C", opgaven: ["62","63","65","A67","A68"] },
+    { week: "46", label: "9.5A", opgaven: ["71","72","73","74","A75","A76"] },
+    { week: "47", label: "9.5B", opgaven: ["79","80","81","82","84","A85","A86","A87","A88"] },
+    { week: "47", label: "Toetsvoorbereiding H9", opgaven: ["Toetsvoorbereiding"] },
+    { week: "48", label: "11.1A", opgaven: ["V1","V2","3"] },
+    { week: "48", label: "11.1B", opgaven: ["6","A10","12","A13","A14"] },
+    { week: "48", label: "11.1C", opgaven: ["17","18","19","A20","A21"] },
+    { week: "49", label: "11.2A", opgaven: ["23","24","26","27","A28","A29"] },
+    { week: "49", label: "11.2B", opgaven: ["36","37","38","39"] },
+    { week: "50", label: "Toetsvoorbereiding H9", opgaven: ["Toetsvoorbereiding"] },
+    { week: "50/51", label: "Toets H9", opgaven: ["Toets H9"] }
   ];
 
   function loadPlanState(){ return cloudGet(PLAN_KEY, {}); }
   function savePlanState(state){ cloudSet(PLAN_KEY, state); }
 
+  function weekDoneCount(wk, state){
+    var done = 0;
+    PLANNING_DATA.forEach(function(g, idx){
+      if (g.week !== wk) return;
+      g.opgaven.forEach(function(_, i2){
+        var st = state[idx + "-" + i2];
+        if (st && st.done) done++;
+      });
+    });
+    return done;
+  }
+
+  function weekTotalCount(wk){
+    var total = 0;
+    PLANNING_DATA.forEach(function(g){
+      if (g.week === wk) total += g.opgaven.length;
+    });
+    return total;
+  }
+
   function renderPlanning(){
     var state = loadPlanState();
     planContainer.innerHTML = "";
+    var lastWeek = null;
+    var weekCountSpans = {};
+
     PLANNING_DATA.forEach(function(group, gIdx){
+      if (group.week !== lastWeek) {
+        lastWeek = group.week;
+        var total = weekTotalCount(group.week);
+        var done = weekDoneCount(group.week, state);
+
+        var divider = document.createElement("div");
+        divider.className = "plan-week-divider" + (done === total ? " complete" : "");
+
+        var wkTitle = document.createElement("span");
+        wkTitle.className = "plan-week-title";
+        wkTitle.textContent = "Week " + group.week;
+
+        var wkCount = document.createElement("span");
+        wkCount.className = "plan-week-count";
+        wkCount.textContent = done + "/" + total + " opgaven";
+
+        divider.appendChild(wkTitle);
+        divider.appendChild(wkCount);
+        planContainer.appendChild(divider);
+        weekCountSpans[group.week] = { span: wkCount, div: divider, total: total };
+      }
+
       var doneCount = 0;
       group.opgaven.forEach(function(_, iIdx){
         var st = state[gIdx + "-" + iIdx];
@@ -977,6 +1044,13 @@ var pageDocRef = doc(db, "studiehub", "wiskunde");
             if (st2 && st2.done) newDoneCount++;
           });
           countSpan.textContent = newDoneCount + "/" + group.opgaven.length + " gedaan";
+
+          var wkInfo = weekCountSpans[group.week];
+          if (wkInfo) {
+            var newWeekDone = weekDoneCount(group.week, s);
+            wkInfo.span.textContent = newWeekDone + "/" + wkInfo.total + " opgaven";
+            wkInfo.div.classList.toggle("complete", newWeekDone === wkInfo.total);
+          }
         });
         wrap.appendChild(chip);
       });
