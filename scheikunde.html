@@ -261,6 +261,29 @@
   .chapter-item.active .chapter-title{color:var(--ok);}
   .chapter-item.active .chapter-check{opacity:1;}
 
+  /* Planning: week-divider (zelfde stijl als Wiskunde/Natuurkunde) */
+  .plan-week-divider{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    padding:10px 2px 6px;
+    margin-top:18px;
+    border-bottom:2px solid var(--accent-line);
+  }
+  .plan-week-divider:first-child{margin-top:0;}
+  .plan-week-title{
+    font-size:14px; font-weight:800; letter-spacing:.02em;
+    color:var(--ink); text-transform:uppercase;
+  }
+  .plan-week-count{
+    font-family:var(--font-mono); font-size:12px; font-weight:600;
+    color:var(--ink-faint);
+    padding:3px 9px; border-radius:999px;
+    background:var(--bg-alt); border:1px solid var(--card-border);
+    white-space:nowrap;
+  }
+  .plan-week-divider.complete .plan-week-count{
+    background:var(--ok); border-color:var(--ok); color:#0f0f11;
+  }
+
   /* Planning */
   .plan-chip{
     display:inline-flex; align-items:center; gap:5px;
@@ -272,6 +295,18 @@
   .plan-chip:hover{border-color:var(--card-border-hover);}
   .plan-chip.done{background:var(--ok); border-color:var(--ok); color:#0f0f11; font-weight:700;}
   .plan-chip.moeilijk{background:#e0a13d; border-color:#e0a13d; color:#0f0f11; font-weight:700;}
+
+  /* Optionele (niet-verplichte) opgaven: zelfde chip, duidelijk minder nadruk in neutrale staat */
+  .plan-chip.optional{
+    border-style:dashed;
+    color:var(--ink-faint);
+    background:transparent;
+  }
+  .plan-chip.optional:hover{border-color:var(--card-border-hover); color:var(--ink-dim);}
+  .plan-chip.optional.done{background:var(--ok); border-style:solid; border-color:var(--ok); color:#0f0f11; font-weight:700;}
+  .plan-chip.optional.moeilijk{background:#e0a13d; border-style:solid; border-color:#e0a13d; color:#0f0f11; font-weight:700;}
+
+
 
   /* Aankomende afspraken */
   .agenda-header{
@@ -681,7 +716,7 @@
         <p class="section-label">Planning</p>
         <div class="card">
           <h3>Module 1: Zuren en Basen — voortgang</h3>
-          <p class="card-sub">Uit je modulplanner, per opgave. Tik een opgave aan om te wisselen: neutraal → gedaan (groen) → moeilijk (oranje).</p>
+          <p class="card-sub">Uit je modulplanner, per opgave. Vast omlijnd = verplicht (moet je maken), gestippeld = optioneel (mag je maken, niet verplicht). Tik een opgave aan om te wisselen: neutraal → gedaan (groen) → moeilijk (oranje).</p>
           <div id="plan-container"></div>
         </div>
       </section>
@@ -929,48 +964,129 @@ var pageDocRef = doc(db, "studiehub", "scheikunde");
   var PLAN_KEY = "planning";
   var planContainer = document.getElementById("plan-container");
   var PLANNING_DATA = [
-    { label: "Week 36 — 7.1 pH van een oplossing", opgaven: ["1","2","3","4","5","6","7"] },
-    { label: "Week 37 — 7.2 Zuren in water", opgaven: ["9","10","11","12","13","14","15","16","17","18","19","20","21","22","23"] },
-    { label: "Week 38 — 7.3 pH berekeningen", opgaven: ["25","26","27","28","29","30","31","32","33","34","35","36","37","38","39"] },
-    { label: "Week 39 — 8.1 Basen in water", opgaven: ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"] },
-    { label: "Week 40 — 8.2 pH van basen in water", opgaven: ["17","18","19","20","21","22","23","24","25","26","27","28","29","30"] },
-    { label: "Week 41 — 8.3 Zuur-base reacties (+ practicum)", opgaven: ["32","33","34","35","36","37","38"] },
-    { label: "Week 42 — Afronden startmodule", opgaven: ["Afronden startmodule"] }
+    { week: "36", topic: "7.1 pH van een oplossing", opgaven: [
+      {n:"1",req:false},{n:"2",req:false},{n:"3",req:false},{n:"4",req:false},{n:"5",req:false},{n:"6",req:false},{n:"7",req:false}
+    ]},
+    { week: "37", topic: "7.2 Zuren in water", opgaven: [
+      {n:"9",req:false},{n:"10",req:false},{n:"11",req:false},{n:"12",req:false},{n:"13",req:false},{n:"14",req:false},
+      {n:"15",req:true},{n:"16",req:true},
+      {n:"17",req:false},{n:"18",req:false},{n:"19",req:false},{n:"20",req:false},{n:"21",req:false},
+      {n:"22",req:true},{n:"23",req:true}
+    ]},
+    { week: "38", topic: "7.3 pH berekeningen", opgaven: [
+      {n:"25",req:false},{n:"26",req:false},{n:"27",req:false},{n:"28",req:false},{n:"29",req:false},
+      {n:"30",req:true},{n:"31",req:true},{n:"32",req:true},
+      {n:"33",req:false},{n:"34",req:false},{n:"35",req:false},{n:"36",req:false},{n:"37",req:false},
+      {n:"38",req:true},{n:"39",req:true}
+    ]},
+    { week: "39", topic: "8.1 Basen in water", opgaven: [
+      {n:"1",req:false},{n:"2",req:false},{n:"3",req:false},{n:"4",req:false},{n:"5",req:false},
+      {n:"6",req:true},{n:"7",req:true},{n:"8",req:true},
+      {n:"9",req:false},{n:"10",req:false},
+      {n:"11",req:true},
+      {n:"12",req:false},{n:"13",req:false},{n:"14",req:false},
+      {n:"15",req:true},{n:"16",req:true}
+    ]},
+    { week: "40", topic: "8.2 pH van basen in water", opgaven: [
+      {n:"17",req:false},{n:"18",req:false},{n:"19",req:false},{n:"20",req:false},
+      {n:"21",req:true},{n:"22",req:true},{n:"23",req:true},
+      {n:"24",req:false},{n:"25",req:false},{n:"26",req:false},
+      {n:"27",req:true},{n:"28",req:true},{n:"29",req:true},{n:"30",req:true}
+    ]},
+    { week: "41", topic: "8.3 Zuur-base reacties (+ practicum)", opgaven: [
+      {n:"32",req:false},{n:"33",req:false},{n:"34",req:false},{n:"35",req:false},{n:"36",req:false},
+      {n:"37",req:true},{n:"38",req:true}
+    ]},
+    { week: "42", topic: "Afronden startmodule", opgaven: [
+      {n:"Afronden startmodule",req:true}
+    ]}
   ];
 
   function loadPlanState(){ return cloudGet(PLAN_KEY, {}); }
   function savePlanState(state){ cloudSet(PLAN_KEY, state); }
 
+  function groupStats(group, state, gIdx){
+    var reqTotal = 0, reqDone = 0, optTotal = 0, optDone = 0;
+    group.opgaven.forEach(function(item, iIdx){
+      var st = state[gIdx + "-" + iIdx];
+      var isDone = !!(st && st.done);
+      if (item.req) { reqTotal++; if (isDone) reqDone++; }
+      else { optTotal++; if (isDone) optDone++; }
+    });
+    return { reqTotal: reqTotal, reqDone: reqDone, optTotal: optTotal, optDone: optDone };
+  }
+
+  // Bouwt de badge-tekst + of de groep als "afgerond" mag gelden.
+  // Uitgangspunt: verplicht gaat voor. Zijn alle verplichte opgaven gedaan,
+  // dan is de week klaar — ook al staan er nog optionele opgaven open.
+  function badgeInfo(stats){
+    if (stats.reqTotal === 0) {
+      // Geen enkele opgave deze week is als verplicht gemarkeerd: val terug
+      // op een simpele totaalteller (alles is dan immers "vrijwillig").
+      var total = stats.optTotal;
+      var done = stats.optDone;
+      if (total > 0 && done === total) {
+        return { text: "Alles gedaan ✓", complete: true };
+      }
+      return { text: done + "/" + total + " gedaan", complete: false };
+    }
+    if (stats.reqDone < stats.reqTotal) {
+      return { text: stats.reqDone + "/" + stats.reqTotal + " verplicht", complete: false };
+    }
+    // Alle verplichte opgaven zijn gedaan.
+    if (stats.optTotal === 0 || stats.optDone === 0) {
+      return { text: "Afgerond ✓", complete: true };
+    }
+    if (stats.optDone < stats.optTotal) {
+      return { text: "Afgerond ✓ (+" + stats.optDone + " extra)", complete: true };
+    }
+    return { text: "Alles gedaan ✓", complete: true };
+  }
+
   function renderPlanning(){
     var state = loadPlanState();
     planContainer.innerHTML = "";
+
     PLANNING_DATA.forEach(function(group, gIdx){
-      var doneCount = 0;
-      group.opgaven.forEach(function(_, iIdx){
-        var st = state[gIdx + "-" + iIdx];
-        if (st && st.done) doneCount++;
-      });
+      var stats = groupStats(group, state, gIdx);
+      var badge = badgeInfo(stats);
+
+      var divider = document.createElement("div");
+      divider.className = "plan-week-divider" + (badge.complete ? " complete" : "");
+      var wkTitle = document.createElement("span");
+      wkTitle.className = "plan-week-title";
+      wkTitle.textContent = "Week " + group.week;
+      var wkCount = document.createElement("span");
+      wkCount.className = "plan-week-count";
+      wkCount.textContent = badge.text;
+      divider.appendChild(wkTitle);
+      divider.appendChild(wkCount);
+      planContainer.appendChild(divider);
 
       var det = document.createElement("details");
       det.className = "binas-cat";
       var sum = document.createElement("summary");
       var sumSpan = document.createElement("span");
-      sumSpan.textContent = group.label;
+      sumSpan.textContent = group.topic;
       var countSpan = document.createElement("span");
       countSpan.className = "binas-cat-count";
-      countSpan.textContent = doneCount + "/" + group.opgaven.length + " gedaan";
+      countSpan.textContent = badge.text;
       sum.appendChild(sumSpan);
       sum.appendChild(countSpan);
       det.appendChild(sum);
 
       var wrap = document.createElement("div");
       wrap.className = "binas-chips";
-      group.opgaven.forEach(function(label, iIdx){
+      group.opgaven.forEach(function(item, iIdx){
         var id = gIdx + "-" + iIdx;
         var st = state[id] || {};
         var chip = document.createElement("span");
-        chip.className = "plan-chip" + (st.done ? " done" : "") + (st.moeilijk ? " moeilijk" : "");
-        chip.textContent = label;
+        chip.className = "plan-chip"
+          + (item.req ? "" : " optional")
+          + (st.done ? " done" : "")
+          + (st.moeilijk ? " moeilijk" : "");
+        chip.textContent = item.n;
+        if (!item.req) chip.title = "Optioneel — mag, niet verplicht";
         chip.addEventListener("click", function(){
           var s = loadPlanState();
           var cur = s[id] || {};
@@ -981,12 +1097,12 @@ var pageDocRef = doc(db, "studiehub", "scheikunde");
           savePlanState(s);
           chip.classList.toggle("done", !!cur.done);
           chip.classList.toggle("moeilijk", !!cur.moeilijk);
-          var newDoneCount = 0;
-          group.opgaven.forEach(function(_, i2){
-            var st2 = s[gIdx + "-" + i2];
-            if (st2 && st2.done) newDoneCount++;
-          });
-          countSpan.textContent = newDoneCount + "/" + group.opgaven.length + " gedaan";
+
+          var newStats = groupStats(group, s, gIdx);
+          var newBadge = badgeInfo(newStats);
+          countSpan.textContent = newBadge.text;
+          wkCount.textContent = newBadge.text;
+          divider.classList.toggle("complete", newBadge.complete);
         });
         wrap.appendChild(chip);
       });
