@@ -16,6 +16,10 @@
     --ink-dim:#a6a6b0;
     --ink-faint:#6c6c78;
     --accent:#eaeaea;
+    --accent-soft:#eaeaea1a;
+    --accent-line:#eaeaea55;
+    --danger:#e05d5d;
+    --ok:#4fbf7d;
     --radius:16px;
     --radius-sm:10px;
     --font-display: "Iowan Old Style","Palatino Linotype","Georgia",ui-serif,serif;
@@ -76,6 +80,125 @@
   .meta-row .sep{color:var(--ink-faint);}
   .meta-row a{color:var(--ink); text-decoration:underline; text-decoration-color:var(--card-border-hover); text-underline-offset:3px;}
   .meta-row a:hover{text-decoration-color:var(--ink);}
+
+  /* ---------------- PIN GATE ---------------- */
+  .pin-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:26px 24px;
+    max-width:420px;
+    margin-top:30px;
+  }
+  .pin-card p{
+    margin:0 0 16px;
+    font-size:14px;
+    color:var(--ink-dim);
+  }
+  .pin-form{display:flex; gap:10px;}
+  .pin-input{
+    flex:1;
+    background:var(--bg-alt);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    color:var(--ink);
+    font-family:var(--font-mono);
+    font-size:20px;
+    letter-spacing:.3em;
+    text-align:center;
+    padding:12px 10px;
+    min-width:0;
+    transition:border-color .2s var(--ease);
+  }
+  .pin-input:focus{border-color:var(--accent-line);}
+  .pin-submit{
+    background:var(--ink);
+    color:#0f0f11;
+    border:none;
+    border-radius:var(--radius-sm);
+    padding:0 20px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:transform .15s var(--ease), opacity .15s var(--ease);
+  }
+  .pin-submit:hover{opacity:.88;}
+  .pin-submit:active{transform:scale(.97);}
+  .pin-error{
+    margin-top:12px;
+    font-size:13px;
+    color:var(--danger);
+    min-height:16px;
+    opacity:0;
+    transition:opacity .2s var(--ease);
+  }
+  .pin-error.show{opacity:1;}
+  .pin-error.shake{animation:shake .35s var(--ease);}
+  @keyframes shake{
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(5px);}
+    60%{transform:translateX(-3px);}
+    80%{transform:translateX(2px);}
+    100%{transform:translateX(0);}
+  }
+
+  /* ---------------- DASHBOARD ---------------- */
+  #dashboard{display:none;}
+  #dashboard.visible{
+    display:block;
+    animation:fadeUp .55s var(--ease);
+  }
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  /* ---------------- TABS ---------------- */
+  .tabbar{
+    display:flex;
+    gap:6px;
+    margin-bottom:28px;
+    border-bottom:1px solid var(--card-border);
+  }
+  .tab-btn{
+    background:none;
+    border:none;
+    color:var(--ink-faint);
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:10px 4px 12px;
+    margin-right:18px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:color .2s var(--ease), border-color .2s var(--ease);
+  }
+  .tab-btn:hover{color:var(--ink-dim);}
+  .tab-btn.active{color:var(--ink); border-bottom-color:var(--accent);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  /* ---------------- QUICK LINKS (Instellingen) ---------------- */
+  .link-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+  }
+  .link-btn{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    padding:16px 18px;
+    text-decoration:none;
+    color:var(--ink);
+    transition:border-color .2s var(--ease), transform .15s var(--ease), background .2s var(--ease);
+  }
+  .link-btn:hover{border-color:var(--card-border-hover); background:var(--bg-alt); transform:translateY(-1px);}
+  .link-btn .lbl{font-weight:600; font-size:14.5px;}
+  .link-btn .sub{display:block; font-size:12px; color:var(--ink-faint); margin-top:2px; font-weight:400;}
+  .link-btn .arrow{color:var(--ink-faint); font-size:16px; flex-shrink:0;}
 
   .section-label{
     font-family:var(--font-mono);
@@ -156,60 +279,167 @@
         <span class="sep">·</span>
         <span><b>E-mail</b> <a href="mailto:el128979@leerling.eligant.nl">el128979@leerling.eligant.nl</a></span>
       </div>
+
+      <!-- PIN GATE -->
+      <div class="pin-card" id="pin-card">
+        <p>Voer PIN in om de studiehub te ontgrendelen.</p>
+        <form class="pin-form" id="pin-form" autocomplete="off">
+          <input
+            class="pin-input"
+            id="pin-input"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="8"
+            placeholder="••••"
+            aria-label="PIN code"
+            required
+          >
+          <button class="pin-submit" type="submit">Ontgrendel</button>
+        </form>
+        <p class="pin-error" id="pin-error">Onjuiste PIN. Probeer opnieuw.</p>
+      </div>
     </div>
   </header>
 
   <main class="wrap">
-    <p class="section-label">Kies een vak</p>
-    <div class="tile-grid">
-      <a class="tile" href="wiskunde.html" style="--tile-color:#eaeaea;">
-        <div class="tile-icon">∑</div>
-        <div class="tile-body">
-          <div class="tile-title">Wiskunde</div>
-          <div class="tile-sub">Deel 1 · hoofdstukken, abc-formule, cijfers</div>
-        </div>
-        <div class="tile-arrow">→</div>
-      </a>
+    <div id="dashboard">
 
-      <a class="tile" href="biologie.html" style="--tile-color:#2ecc71;">
-        <div class="tile-icon">🧬</div>
-        <div class="tile-body">
-          <div class="tile-title">Biologie</div>
-          <div class="tile-sub">Thema's, Binas legenda, foutenlogboek</div>
-        </div>
-        <div class="tile-arrow">→</div>
-      </a>
+      <div class="tabbar">
+        <button type="button" class="tab-btn active" id="tab-btn-vakken">Kies een vak</button>
+        <button type="button" class="tab-btn" id="tab-btn-instellingen">Instellingen</button>
+      </div>
 
-      <a class="tile" href="scheikunde.html" style="--tile-color:#e74c3c;">
-        <div class="tile-icon">⚗️</div>
-        <div class="tile-body">
-          <div class="tile-title">Scheikunde</div>
-          <div class="tile-sub">Hoofdstukken, mol- &amp; pH-rekenmachine, Binas legenda</div>
-        </div>
-        <div class="tile-arrow">→</div>
-      </a>
+      <div class="tab-panel active" id="tab-vakken">
+        <div class="tile-grid">
+          <a class="tile" href="wiskunde.html" style="--tile-color:#eaeaea;">
+            <div class="tile-icon">∑</div>
+            <div class="tile-body">
+              <div class="tile-title">Wiskunde</div>
+              <div class="tile-sub">Deel 1 · hoofdstukken, abc-formule, cijfers</div>
+            </div>
+            <div class="tile-arrow">→</div>
+          </a>
 
-      <a class="tile" href="natuurkunde.html" style="--tile-color:#3498db;">
-        <div class="tile-icon">⚛️</div>
-        <div class="tile-body">
-          <div class="tile-title">Natuurkunde</div>
-          <div class="tile-sub">Newton hoofdstukken, Binas legenda, eenheden omrekenen</div>
-        </div>
-        <div class="tile-arrow">→</div>
-      </a>
+          <a class="tile" href="biologie.html" style="--tile-color:#2ecc71;">
+            <div class="tile-icon">🧬</div>
+            <div class="tile-body">
+              <div class="tile-title">Biologie</div>
+              <div class="tile-sub">Thema's, Binas legenda, foutenlogboek</div>
+            </div>
+            <div class="tile-arrow">→</div>
+          </a>
 
-      <a class="tile" href="nederlands.html" style="--tile-color:#ffffff;">
-        <div class="tile-icon">📖</div>
-        <div class="tile-body">
-          <div class="tile-title">Nederlands</div>
-          <div class="tile-sub">Leeslijst, alinea-opbouw, dyslexie-leesmodus</div>
+          <a class="tile" href="scheikunde.html" style="--tile-color:#e74c3c;">
+            <div class="tile-icon">⚗️</div>
+            <div class="tile-body">
+              <div class="tile-title">Scheikunde</div>
+              <div class="tile-sub">Hoofdstukken, mol- &amp; pH-rekenmachine, Binas legenda</div>
+            </div>
+            <div class="tile-arrow">→</div>
+          </a>
+
+          <a class="tile" href="natuurkunde.html" style="--tile-color:#3498db;">
+            <div class="tile-icon">⚛️</div>
+            <div class="tile-body">
+              <div class="tile-title">Natuurkunde</div>
+              <div class="tile-sub">Newton hoofdstukken, Binas legenda, eenheden omrekenen</div>
+            </div>
+            <div class="tile-arrow">→</div>
+          </a>
+
+          <a class="tile" href="nederlands.html" style="--tile-color:#ffffff;">
+            <div class="tile-icon">📖</div>
+            <div class="tile-body">
+              <div class="tile-title">Nederlands</div>
+              <div class="tile-sub">Leeslijst, alinea-opbouw, dyslexie-leesmodus</div>
+            </div>
+            <div class="tile-arrow">→</div>
+          </a>
         </div>
-        <div class="tile-arrow">→</div>
-      </a>
+      </div>
+
+      <div class="tab-panel" id="tab-instellingen">
+        <p class="section-label">Snelle links</p>
+        <div class="link-grid">
+          <a class="link-btn" id="cal-link" href="webcal://p172-caldav.icloud.com/published/2/MTYzNDc5ODA0MzkxNjM0N9_-1OcZvIWnJCn4CwXkRyIF_7WhnFHvpElqRX1YeYEiO7Nf1mIp0WhtVKTIkMxd3IAN0xZ4CItvsWEv2V32s0c">
+            <span><span class="lbl">Koppel Apple Agenda</span><span class="sub">iCloud kalender-abonnement</span></span>
+            <span class="arrow">→</span>
+          </a>
+        </div>
+      </div>
+
     </div>
   </main>
 
   <footer>Parker Bergman · 5G · Studiehub</footer>
 
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- CONFIG ----------------
+     Let op: dit is client-side "beveiliging". Iedereen die de
+     broncode bekijkt (view-source) kan deze PIN aflezen. Gebruik
+     dit als een simpele drempel, niet als echte beveiliging van
+     gevoelige gegevens. */
+  var PIN = "1977";
+  var SESSION_KEY = "studiehub_unlocked"; // gedeeld met de vakpagina's: 1x ontgrendelen binnen je tab-sessie volstaat
+
+  var pinCard = document.getElementById("pin-card");
+  var pinForm = document.getElementById("pin-form");
+  var pinInput = document.getElementById("pin-input");
+  var pinError = document.getElementById("pin-error");
+  var dashboard = document.getElementById("dashboard");
+
+  function unlock(){
+    pinCard.style.display = "none";
+    dashboard.classList.add("visible");
+    try { sessionStorage.setItem(SESSION_KEY, "true"); } catch(e){}
+  }
+
+  // Herstel ontgrendelstatus binnen deze sessie
+  try {
+    if (sessionStorage.getItem(SESSION_KEY) === "true") {
+      unlock();
+    }
+  } catch(e){}
+
+  pinForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var val = pinInput.value.trim();
+    if (val === PIN) {
+      pinError.classList.remove("show", "shake");
+      unlock();
+    } else {
+      pinError.classList.add("show");
+      pinError.classList.remove("shake");
+      // force reflow zodat de shake-animatie opnieuw kan triggeren
+      void pinError.offsetWidth;
+      pinError.classList.add("shake");
+      pinInput.value = "";
+      pinInput.focus();
+    }
+  });
+
+  /* ---------------- TABS ---------------- */
+  var tabBtnVakken = document.getElementById("tab-btn-vakken");
+  var tabBtnInstellingen = document.getElementById("tab-btn-instellingen");
+  var tabVakken = document.getElementById("tab-vakken");
+  var tabInstellingen = document.getElementById("tab-instellingen");
+
+  function showTab(name){
+    var isVakken = name === "vakken";
+    tabBtnVakken.classList.toggle("active", isVakken);
+    tabBtnInstellingen.classList.toggle("active", !isVakken);
+    tabVakken.classList.toggle("active", isVakken);
+    tabInstellingen.classList.toggle("active", !isVakken);
+  }
+
+  tabBtnVakken.addEventListener("click", function(){ showTab("vakken"); });
+  tabBtnInstellingen.addEventListener("click", function(){ showTab("instellingen"); });
+
+})();
+</script>
 </body>
 </html>
