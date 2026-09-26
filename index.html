@@ -458,6 +458,16 @@
   <div id="mini-player" class="mini-player">
     <button class="mp-login" id="mp-login-btn" type="button">🎧 Log in met Spotify</button>
 
+    <!-- Collapsed: alleen hoes + play/pauze -->
+    <button class="mp-collapsed" id="mp-collapsed" type="button" aria-label="Open muziekspeler">
+      <img class="mp-art-sm" id="mp-art-sm" src="" alt="">
+      <div class="mp-bars mp-bars-sm" id="mp-bars-sm">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span class="mp-mini-toggle" id="mp-mini-toggle">▶︎</span>
+    </button>
+
+    <!-- Uitgeklapt: volledige bediening -->
     <div class="mp-body" id="mp-body">
       <div class="mp-art-wrap">
         <img class="mp-art" id="mp-art" src="" alt="">
@@ -470,6 +480,7 @@
         <div class="mp-artist" id="mp-artist">—</div>
       </div>
       <div class="mp-controls">
+        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle">🔀</button>
         <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
         <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
         <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>
@@ -492,12 +503,19 @@
   var LS_TOKEN_EXPIRES = "spotify_token_expires";
   var LS_REFRESH_TOKEN = "spotify_refresh_token";
 
+  var miniPlayer = document.getElementById("mini-player");
   var loginBtn = document.getElementById("mp-login-btn");
+  var collapsedBtn = document.getElementById("mp-collapsed");
+  var mpArtSm = document.getElementById("mp-art-sm");
+  var mpBarsSm = document.getElementById("mp-bars-sm");
+  var mpMiniToggle = document.getElementById("mp-mini-toggle");
   var mpBody = document.getElementById("mp-body");
+  var mpArtWrap = document.querySelector(".mp-art-wrap");
   var mpArt = document.getElementById("mp-art");
   var mpTitle = document.getElementById("mp-title");
   var mpArtist = document.getElementById("mp-artist");
   var mpBars = document.getElementById("mp-bars");
+  var shuffleBtn = document.getElementById("mp-shuffle-btn");
   var toggleBtn = document.getElementById("mp-toggle-btn");
   var prevBtn = document.getElementById("mp-prev-btn");
   var nextBtn = document.getElementById("mp-next-btn");
@@ -614,22 +632,42 @@
 
   /* ---------- UI states ---------- */
   var isPlaying = false;
+  var isShuffled = false;
   var startedOnce = false;
+  var idleTimer = null;
 
   function showLoggedOut(){
+    miniPlayer.classList.remove("logged-in", "collapsed");
     loginBtn.style.display = "block";
-    mpBody.style.display = "none";
   }
 
   function showLoggedIn(){
     loginBtn.style.display = "none";
-    mpBody.style.display = "flex";
+    miniPlayer.classList.add("logged-in", "collapsed"); // start ingeklapt
+  }
+
+  function expandPlayer(){
+    miniPlayer.classList.remove("collapsed");
+    resetIdleTimer();
+  }
+
+  function collapsePlayer(){
+    miniPlayer.classList.add("collapsed");
+    resetIdleTimer();
   }
 
   function setPlayingUI(playing){
     isPlaying = playing;
-    toggleBtn.textContent = playing ? "⏸" : "▶︎";
+    var icon = playing ? "⏸" : "▶︎";
+    toggleBtn.textContent = icon;
+    mpMiniToggle.textContent = icon;
     mpBars.classList.toggle("playing", playing);
+    mpBarsSm.classList.toggle("playing", playing);
+  }
+
+  function setShuffleUI(shuffled){
+    isShuffled = shuffled;
+    shuffleBtn.classList.toggle("active", shuffled);
   }
 
   function updateTrackInfo(track){
@@ -639,8 +677,20 @@
     var art = track.album && track.album.images && track.album.images.length
       ? track.album.images[track.album.images.length - 1].url
       : "";
-    if (art) mpArt.src = art;
+    if (art){ mpArt.src = art; mpArtSm.src = art; }
   }
+
+  /* ---------- Idle fade: valt rustig weg als je niks aanraakt ---------- */
+  function resetIdleTimer(){
+    miniPlayer.classList.remove("idle");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){
+      miniPlayer.classList.add("idle");
+    }, 4000);
+  }
+  ["mousemove","mouseenter","touchstart","click","focusin"].forEach(function(evt){
+    miniPlayer.addEventListener(evt, resetIdleTimer);
+  });
 
   /* ---------- Handle redirect back from Spotify ---------- */
   function handleRedirect(){
@@ -683,6 +733,7 @@
     player.addListener("player_state_changed", function(state){
       if (!state) return;
       setPlayingUI(!state.paused);
+      setShuffleUI(!!state.shuffle);
       if (state.track_window && state.track_window.current_track){
         updateTrackInfo(state.track_window.current_track);
         startedOnce = true;
@@ -742,10 +793,36 @@
     });
   }
 
+  function toggleShuffle(){
+    var newState = !isShuffled;
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/shuffle?state=" + newState + "&device_id=" + deviceId, {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + token }
+      }).then(function(){ setShuffleUI(newState); });
+    });
+  }
+
   loginBtn.addEventListener("click", redirectToSpotifyLogin);
   toggleBtn.addEventListener("click", togglePlayback);
   prevBtn.addEventListener("click", prevTrack);
   nextBtn.addEventListener("click", nextTrack);
+  shuffleBtn.addEventListener("click", toggleShuffle);
+
+  collapsedBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    expandPlayer();
+  });
+
+  // Klik buiten de uitgeklapte speler -> weer inklappen
+  document.addEventListener("click", function(e){
+    if (!miniPlayer.classList.contains("logged-in")) return;
+    if (miniPlayer.classList.contains("collapsed")) return;
+    if (!miniPlayer.contains(e.target)) collapsePlayer();
+  });
+
+  mpArtWrap.addEventListener("click", togglePlayback);
+  resetIdleTimer();
 
   if (!handleRedirect()){
     if (localStorage.getItem(LS_ACCESS_TOKEN)){
@@ -761,19 +838,20 @@
   <style>
     .mini-player{
       position:fixed;
-      left:16px;
+      right:16px;
       bottom:16px;
       z-index:9999;
-      background:var(--card);
-      border:1px solid var(--card-border);
-      border-radius:var(--radius);
-      box-shadow:0 8px 28px rgba(0,0,0,.45);
-      padding:10px;
       font-family:var(--font-body);
       color:var(--ink);
       max-width:260px;
-      padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+      padding-bottom:env(safe-area-inset-bottom, 0px);
+      transition:opacity 1.2s var(--ease);
+      opacity:1;
     }
+    .mini-player.idle{opacity:.28;}
+    .mini-player.idle:hover,
+    .mini-player.idle:focus-within{opacity:1;}
+
     .mp-login{
       background:var(--ink);
       color:#0f0f11;
@@ -784,10 +862,64 @@
       font-weight:600;
       cursor:pointer;
       transition:opacity .15s var(--ease);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
     }
     .mp-login:hover{opacity:.88;}
-    .mp-body{display:none; align-items:center; gap:10px;}
-    .mp-art-wrap{position:relative; flex-shrink:0; width:46px; height:46px;}
+
+    /* ---- Collapsed bubble (hoes + play/pauze) ---- */
+    .mp-collapsed{
+      display:none;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      width:52px; height:52px;
+      border-radius:50%;
+      padding:0;
+      border:1px solid var(--card-border);
+      background:var(--card);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      cursor:pointer;
+      overflow:hidden;
+    }
+    .mini-player.logged-in.collapsed .mp-collapsed{display:flex;}
+    .mp-art-sm{
+      width:100%; height:100%;
+      object-fit:cover;
+      background:var(--bg-alt);
+      display:block;
+    }
+    .mp-mini-toggle{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px;
+      background:rgba(15,15,17,.35);
+      opacity:0;
+      transition:opacity .2s var(--ease);
+    }
+    .mp-collapsed:hover .mp-mini-toggle{opacity:1;}
+    .mp-bars-sm{
+      position:absolute; inset:0;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      gap:2px;
+      background:rgba(15,15,17,.3);
+    }
+    .mp-bars-sm.playing{display:flex;}
+
+    /* ---- Expanded card ---- */
+    .mp-body{
+      display:none;
+      align-items:center; gap:10px;
+      background:var(--card);
+      border:1px solid var(--card-border);
+      border-radius:var(--radius);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      padding:10px;
+    }
+    .mini-player.logged-in:not(.collapsed) .mp-body{display:flex;}
+
+    .mp-art-wrap{position:relative; flex-shrink:0; width:46px; height:46px; cursor:pointer;}
     .mp-art{
       width:46px; height:46px;
       border-radius:8px;
@@ -802,26 +934,27 @@
       align-items:flex-end;
       justify-content:center;
       gap:3px;
-      background:rgba(15,15,17,.55);
+      background:rgba(15,15,17,.5);
       border-radius:8px;
     }
     .mp-bars.playing{display:flex;}
-    .mp-bars span{
+    .mp-bars span, .mp-bars-sm span{
       width:3px;
       background:var(--ink);
       border-radius:2px;
-      height:6px;
-      animation:mpwave 1s ease-in-out infinite;
+      height:5px;
+      animation:mpwave 2.6s ease-in-out infinite;
     }
-    .mp-bars span:nth-child(1){animation-delay:0s;}
-    .mp-bars span:nth-child(2){animation-delay:.2s;}
-    .mp-bars span:nth-child(3){animation-delay:.4s;}
-    .mp-bars span:nth-child(4){animation-delay:.1s;}
+    .mp-bars-sm span{width:2.5px;}
+    .mp-bars span:nth-child(1),.mp-bars-sm span:nth-child(1){animation-delay:0s;}
+    .mp-bars span:nth-child(2),.mp-bars-sm span:nth-child(2){animation-delay:.5s;}
+    .mp-bars span:nth-child(3),.mp-bars-sm span:nth-child(3){animation-delay:1s;}
+    .mp-bars span:nth-child(4),.mp-bars-sm span:nth-child(4){animation-delay:.25s;}
     @keyframes mpwave{
-      0%,100%{height:5px;}
-      50%{height:18px;}
+      0%,100%{height:4px;}
+      50%{height:11px;}
     }
-    .mp-info{min-width:0; flex:1;}
+    .mp-info{min-width:0; flex:1; cursor:default;}
     .mp-title{
       font-size:12.5px; font-weight:600;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
@@ -830,17 +963,20 @@
       font-size:11px; color:var(--ink-faint);
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .mp-controls{display:flex; align-items:center; gap:2px; flex-shrink:0;}
+    .mp-controls{display:flex; align-items:center; gap:0; flex-shrink:0;}
     .mp-btn{
       background:none; border:none; color:var(--ink);
-      font-size:15px; cursor:pointer; padding:6px;
+      font-size:14px; cursor:pointer; padding:6px;
       border-radius:8px;
-      transition:background .15s var(--ease);
+      transition:background .15s var(--ease), opacity .15s var(--ease);
     }
     .mp-btn:hover{background:var(--bg-alt);}
     .mp-btn-main{font-size:16px;}
+    .mp-btn.active{opacity:1; color:var(--ok);}
+    #mp-shuffle-btn{opacity:.55;}
+    #mp-shuffle-btn.active{opacity:1;}
     @media (prefers-reduced-motion: reduce){
-      .mp-bars span{animation:none; height:10px;}
+      .mp-bars span, .mp-bars-sm span{animation:none; height:8px;}
     }
   </style>
 
