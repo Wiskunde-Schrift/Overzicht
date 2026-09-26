@@ -153,36 +153,83 @@
     to{opacity:1; transform:translateY(0);}
   }
 
-  /* ---------------- TABS ---------------- */
-  .tabbar{
-    display:flex;
-    gap:6px;
-    margin-bottom:28px;
-    border-bottom:1px solid var(--card-border);
-  }
-  .tab-btn{
-    background:none;
-    border:none;
-    color:var(--ink-faint);
-    font-family:var(--font-mono);
-    font-size:12.5px;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    padding:10px 4px 12px;
-    margin-right:18px;
+  /* ---------------- SETTINGS GEAR + DRAWER ---------------- */
+  .gear-btn{
+    position:fixed;
+    top:18px;
+    right:18px;
+    width:40px; height:40px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:50%;
+    color:var(--ink-dim);
+    font-size:18px;
     cursor:pointer;
-    border-bottom:2px solid transparent;
-    transition:color .2s var(--ease), border-color .2s var(--ease);
+    z-index:40;
+    transition:border-color .2s var(--ease), color .2s var(--ease), transform .15s var(--ease);
   }
-  .tab-btn:hover{color:var(--ink-dim);}
-  .tab-btn.active{color:var(--ink); border-bottom-color:var(--accent);}
-  .tab-panel{display:none;}
-  .tab-panel.active{display:block;}
+  .gear-btn:hover{border-color:var(--card-border-hover); color:var(--ink); transform:rotate(25deg);}
+
+  .settings-backdrop{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.5);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s var(--ease);
+    z-index:45;
+  }
+  .settings-backdrop.open{opacity:1; pointer-events:auto;}
+
+  .settings-drawer{
+    position:fixed;
+    top:0; right:0;
+    height:100dvh;
+    width:33.333vw;
+    min-width:280px;
+    max-width:420px;
+    background:var(--bg-alt);
+    border-left:1px solid var(--card-border);
+    box-shadow:-12px 0 40px rgba(0,0,0,.35);
+    transform:translateX(100%);
+    transition:transform .3s var(--ease);
+    z-index:46;
+    padding:24px 22px;
+    overflow-y:auto;
+  }
+  .settings-drawer.open{transform:translateX(0);}
+  .settings-drawer-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .settings-drawer-head h2{
+    font-family:var(--font-display);
+    font-size:20px;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+  .settings-close{
+    background:none;
+    border:1px solid var(--card-border);
+    border-radius:8px;
+    width:32px; height:32px;
+    color:var(--ink-dim);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    transition:border-color .2s var(--ease), color .2s var(--ease);
+  }
+  .settings-close:hover{border-color:var(--card-border-hover); color:var(--ink);}
+
+  @media(max-width:680px){
+    .settings-drawer{width:85vw; min-width:0;}
+  }
 
   /* ---------------- QUICK LINKS (Instellingen) ---------------- */
   .link-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:1fr;
     gap:12px;
   }
   .link-btn{
@@ -305,72 +352,72 @@
   <main class="wrap">
     <div id="dashboard">
 
-      <div class="tabbar">
-        <button type="button" class="tab-btn active" id="tab-btn-vakken">Kies een vak</button>
-        <button type="button" class="tab-btn" id="tab-btn-instellingen">Instellingen</button>
-      </div>
+      <div class="tile-grid">
+        <a class="tile" href="wiskunde.html" style="--tile-color:#eaeaea;">
+          <div class="tile-icon">∑</div>
+          <div class="tile-body">
+            <div class="tile-title">Wiskunde</div>
+            <div class="tile-sub">Deel 1 · hoofdstukken, abc-formule, cijfers</div>
+          </div>
+          <div class="tile-arrow">→</div>
+        </a>
 
-      <div class="tab-panel active" id="tab-vakken">
-        <div class="tile-grid">
-          <a class="tile" href="wiskunde.html" style="--tile-color:#eaeaea;">
-            <div class="tile-icon">∑</div>
-            <div class="tile-body">
-              <div class="tile-title">Wiskunde</div>
-              <div class="tile-sub">Deel 1 · hoofdstukken, abc-formule, cijfers</div>
-            </div>
-            <div class="tile-arrow">→</div>
-          </a>
+        <a class="tile" href="biologie.html" style="--tile-color:#2ecc71;">
+          <div class="tile-icon">🧬</div>
+          <div class="tile-body">
+            <div class="tile-title">Biologie</div>
+            <div class="tile-sub">Thema's, Binas legenda, foutenlogboek</div>
+          </div>
+          <div class="tile-arrow">→</div>
+        </a>
 
-          <a class="tile" href="biologie.html" style="--tile-color:#2ecc71;">
-            <div class="tile-icon">🧬</div>
-            <div class="tile-body">
-              <div class="tile-title">Biologie</div>
-              <div class="tile-sub">Thema's, Binas legenda, foutenlogboek</div>
-            </div>
-            <div class="tile-arrow">→</div>
-          </a>
+        <a class="tile" href="scheikunde.html" style="--tile-color:#e74c3c;">
+          <div class="tile-icon">⚗️</div>
+          <div class="tile-body">
+            <div class="tile-title">Scheikunde</div>
+            <div class="tile-sub">Hoofdstukken, mol- &amp; pH-rekenmachine, Binas legenda</div>
+          </div>
+          <div class="tile-arrow">→</div>
+        </a>
 
-          <a class="tile" href="scheikunde.html" style="--tile-color:#e74c3c;">
-            <div class="tile-icon">⚗️</div>
-            <div class="tile-body">
-              <div class="tile-title">Scheikunde</div>
-              <div class="tile-sub">Hoofdstukken, mol- &amp; pH-rekenmachine, Binas legenda</div>
-            </div>
-            <div class="tile-arrow">→</div>
-          </a>
+        <a class="tile" href="natuurkunde.html" style="--tile-color:#3498db;">
+          <div class="tile-icon">⚛️</div>
+          <div class="tile-body">
+            <div class="tile-title">Natuurkunde</div>
+            <div class="tile-sub">Newton hoofdstukken, Binas legenda, eenheden omrekenen</div>
+          </div>
+          <div class="tile-arrow">→</div>
+        </a>
 
-          <a class="tile" href="natuurkunde.html" style="--tile-color:#3498db;">
-            <div class="tile-icon">⚛️</div>
-            <div class="tile-body">
-              <div class="tile-title">Natuurkunde</div>
-              <div class="tile-sub">Newton hoofdstukken, Binas legenda, eenheden omrekenen</div>
-            </div>
-            <div class="tile-arrow">→</div>
-          </a>
-
-          <a class="tile" href="nederlands.html" style="--tile-color:#ffffff;">
-            <div class="tile-icon">📖</div>
-            <div class="tile-body">
-              <div class="tile-title">Nederlands</div>
-              <div class="tile-sub">Leeslijst, alinea-opbouw, dyslexie-leesmodus</div>
-            </div>
-            <div class="tile-arrow">→</div>
-          </a>
-        </div>
-      </div>
-
-      <div class="tab-panel" id="tab-instellingen">
-        <p class="section-label">Snelle links</p>
-        <div class="link-grid">
-          <a class="link-btn" id="cal-link" href="webcal://p172-caldav.icloud.com/published/2/MTYzNDc5ODA0MzkxNjM0N9_-1OcZvIWnJCn4CwXkRyIF_7WhnFHvpElqRX1YeYEiO7Nf1mIp0WhtVKTIkMxd3IAN0xZ4CItvsWEv2V32s0c">
-            <span><span class="lbl">Koppel Apple Agenda</span><span class="sub">iCloud kalender-abonnement</span></span>
-            <span class="arrow">→</span>
-          </a>
-        </div>
+        <a class="tile" href="nederlands.html" style="--tile-color:#ffffff;">
+          <div class="tile-icon">📖</div>
+          <div class="tile-body">
+            <div class="tile-title">Nederlands</div>
+            <div class="tile-sub">Leeslijst, alinea-opbouw, dyslexie-leesmodus</div>
+          </div>
+          <div class="tile-arrow">→</div>
+        </a>
       </div>
 
     </div>
   </main>
+
+  <!-- SETTINGS GEAR + DRAWER -->
+  <button type="button" class="gear-btn" id="gear-btn" aria-label="Instellingen" aria-haspopup="true" aria-expanded="false">⚙</button>
+  <div class="settings-backdrop" id="settings-backdrop"></div>
+  <aside class="settings-drawer" id="settings-drawer" aria-hidden="true">
+    <div class="settings-drawer-head">
+      <h2>Instellingen</h2>
+      <button type="button" class="settings-close" id="settings-close" aria-label="Sluiten">✕</button>
+    </div>
+    <p class="section-label">Snelle links</p>
+    <div class="link-grid">
+      <a class="link-btn" id="cal-link" href="webcal://p172-caldav.icloud.com/published/2/MTYzNDc5ODA0MzkxNjM0N9_-1OcZvIWnJCn4CwXkRyIF_7WhnFHvpElqRX1YeYEiO7Nf1mIp0WhtVKTIkMxd3IAN0xZ4CItvsWEv2V32s0c">
+        <span><span class="lbl">Koppel Apple Agenda</span><span class="sub">iCloud kalender-abonnement</span></span>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </aside>
 
   <footer>Parker Bergman · 5G · Studiehub</footer>
 
@@ -424,22 +471,33 @@
     }
   });
 
-  /* ---------------- TABS ---------------- */
-  var tabBtnVakken = document.getElementById("tab-btn-vakken");
-  var tabBtnInstellingen = document.getElementById("tab-btn-instellingen");
-  var tabVakken = document.getElementById("tab-vakken");
-  var tabInstellingen = document.getElementById("tab-instellingen");
+  /* ---------------- SETTINGS DRAWER ---------------- */
+  var gearBtn = document.getElementById("gear-btn");
+  var drawer = document.getElementById("settings-drawer");
+  var backdrop = document.getElementById("settings-backdrop");
+  var closeBtn = document.getElementById("settings-close");
 
-  function showTab(name){
-    var isVakken = name === "vakken";
-    tabBtnVakken.classList.toggle("active", isVakken);
-    tabBtnInstellingen.classList.toggle("active", !isVakken);
-    tabVakken.classList.toggle("active", isVakken);
-    tabInstellingen.classList.toggle("active", !isVakken);
+  function openDrawer(){
+    drawer.classList.add("open");
+    backdrop.classList.add("open");
+    drawer.setAttribute("aria-hidden", "false");
+    gearBtn.setAttribute("aria-expanded", "true");
+  }
+  function closeDrawer(){
+    drawer.classList.remove("open");
+    backdrop.classList.remove("open");
+    drawer.setAttribute("aria-hidden", "true");
+    gearBtn.setAttribute("aria-expanded", "false");
   }
 
-  tabBtnVakken.addEventListener("click", function(){ showTab("vakken"); });
-  tabBtnInstellingen.addEventListener("click", function(){ showTab("instellingen"); });
+  gearBtn.addEventListener("click", function(){
+    if (drawer.classList.contains("open")) { closeDrawer(); } else { openDrawer(); }
+  });
+  closeBtn.addEventListener("click", closeDrawer);
+  backdrop.addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape") { closeDrawer(); }
+  });
 
 })();
 </script>
@@ -574,6 +632,7 @@
         <span></span><span></span><span></span><span></span>
       </div>
       <span class="mp-mini-toggle" id="mp-mini-toggle">▶︎</span>
+      <span class="mp-live-dot" aria-hidden="true"></span>
     </button>
 
     <!-- Uitgeklapt: volledige bediening -->
@@ -1076,7 +1135,7 @@
       color:var(--ink);
       max-width:260px;
       padding-bottom:env(safe-area-inset-bottom, 0px);
-      transition:opacity 1.2s var(--ease);
+      transition:opacity .5s var(--ease);
       opacity:1;
     }
     .mini-player.idle{opacity:.28;}
@@ -1092,10 +1151,15 @@
       font-size:13px;
       font-weight:600;
       cursor:pointer;
-      transition:opacity .15s var(--ease);
+      transition:opacity .15s var(--ease), transform .15s var(--ease);
       box-shadow:0 8px 28px rgba(0,0,0,.45);
     }
-    .mp-login:hover{opacity:.88;}
+    .mp-login:hover{opacity:.88; transform:translateY(-1px);}
+
+    @keyframes mpPopIn{
+      from{opacity:0; transform:scale(.82);}
+      to{opacity:1; transform:scale(1);}
+    }
 
     /* ---- Collapsed bubble (hoes + play/pauze) ---- */
     .mp-collapsed{
@@ -1111,14 +1175,41 @@
       box-shadow:0 8px 28px rgba(0,0,0,.45);
       cursor:pointer;
       overflow:hidden;
+      transition:border-color .25s var(--ease), box-shadow .25s var(--ease), transform .15s var(--ease);
     }
-    .mini-player.logged-in.collapsed .mp-collapsed{display:flex;}
+    .mp-collapsed:hover{transform:translateY(-1px) scale(1.03);}
+    .mini-player.logged-in.collapsed .mp-collapsed{
+      display:flex;
+      animation:mpPopIn .3s var(--ease);
+    }
+    .mp-collapsed:has(.mp-bars-sm.playing){
+      border-color:color-mix(in srgb, var(--ok) 55%, var(--card-border));
+      box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 3px color-mix(in srgb, var(--ok) 18%, transparent);
+      animation:mpPopIn .3s var(--ease), mpGlow 2.4s ease-in-out infinite;
+    }
+    @keyframes mpGlow{
+      0%,100%{box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 3px color-mix(in srgb, var(--ok) 14%, transparent);}
+      50%{box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 5px color-mix(in srgb, var(--ok) 26%, transparent);}
+    }
+    .mp-live-dot{
+      position:absolute;
+      top:3px; right:3px;
+      width:8px; height:8px;
+      border-radius:50%;
+      background:var(--ok);
+      border:1.5px solid var(--card);
+      opacity:0;
+      transition:opacity .2s var(--ease);
+    }
+    .mp-collapsed:has(.mp-bars-sm.playing) .mp-live-dot{opacity:1;}
     .mp-art-sm{
       width:100%; height:100%;
       object-fit:cover;
       background:var(--bg-alt);
       display:block;
+      transition:transform .3s var(--ease);
     }
+    .mp-collapsed:hover .mp-art-sm{transform:scale(1.08);}
     .mp-mini-toggle{
       position:absolute; inset:0;
       display:flex; align-items:center; justify-content:center;
@@ -1148,9 +1239,12 @@
       box-shadow:0 8px 28px rgba(0,0,0,.45);
       padding:10px;
     }
-    .mini-player.logged-in:not(.collapsed) .mp-body{display:flex;}
+    .mini-player.logged-in:not(.collapsed) .mp-body{
+      display:flex;
+      animation:mpPopIn .3s var(--ease);
+    }
 
-    .mp-art-wrap{position:relative; flex-shrink:0; width:46px; height:46px; cursor:pointer;}
+    .mp-art-wrap{position:relative; flex-shrink:0; width:46px; height:46px; cursor:pointer; border-radius:8px; overflow:hidden;}
     .mp-art{
       width:46px; height:46px;
       border-radius:8px;
@@ -1158,7 +1252,9 @@
       background:var(--bg-alt);
       border:1px solid var(--card-border);
       display:block;
+      transition:transform .35s var(--ease);
     }
+    .mp-art-wrap:hover .mp-art{transform:scale(1.08) rotate(-2deg);}
     .mp-bars{
       position:absolute; inset:0;
       display:none;
@@ -1199,10 +1295,16 @@
       background:none; border:none; color:var(--ink);
       font-size:14px; cursor:pointer; padding:6px;
       border-radius:8px;
-      transition:background .15s var(--ease), opacity .15s var(--ease);
+      transition:background .15s var(--ease), opacity .15s var(--ease), transform .1s var(--ease);
     }
     .mp-btn:hover{background:var(--bg-alt);}
-    .mp-btn-main{font-size:16px;}
+    .mp-btn:active{transform:scale(.9);}
+    .mp-btn-main{
+      font-size:16px;
+      background:var(--bg-alt);
+      border:1px solid var(--card-border);
+    }
+    .mp-btn-main:hover{border-color:var(--card-border-hover);}
     .mp-btn.active{opacity:1; color:var(--ok);}
     #mp-shuffle-btn{opacity:.55;}
     #mp-shuffle-btn.active{opacity:1;}
