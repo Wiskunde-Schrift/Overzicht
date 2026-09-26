@@ -362,13 +362,7 @@
 
       <div class="tab-panel" id="tab-muziek">
         <p class="section-label">Studiemuziek</p>
-        <div class="pin-card" style="max-width:420px;">
-          <p id="spotify-status">Log in met Spotify om je studiemuziek te starten.</p>
-          <button class="pin-submit" id="spotify-login-btn" type="button" style="width:100%; padding:12px 0;">Log in met Spotify</button>
-          <button class="pin-submit" id="spotify-play-btn" type="button" style="display:none; width:100%; padding:12px 0; margin-top:10px;">▶︎ Start studiemuziek</button>
-          <button class="pin-submit" id="spotify-pause-btn" type="button" style="display:none; width:100%; padding:12px 0; margin-top:10px; background:var(--card-border-hover); color:var(--ink);">⏸ Pauzeer</button>
-          <p style="margin-top:14px; font-size:12px; color:var(--ink-faint);">Zodra de muziek speelt, verschijnt "Studiehub" als apparaat in je AirPlay- of Spotify Connect-lijst. Kies daar zelf je AirPods of HomePod.</p>
-        </div>
+        <p style="font-size:14px; color:var(--ink-dim);">Je muziekspeler vind je linksonder in beeld, op elke pagina.</p>
       </div>
 
       <div class="tab-panel" id="tab-instellingen">
@@ -467,9 +461,7 @@
   /* ================= CONFIG ================= */
   var CLIENT_ID = "c0217c44e28f422494a5c0b26799daac";
   var REDIRECT_URI = "https://wiskunde-schrift.github.io/Overzicht/index.html"; // moet exact overeenkomen met Spotify Dashboard
-  // Zet hier je eigen studie-playlist link/URI. Voorbeeld playlist-link:
-  // https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ
-  var PLAYLIST_URI = "spotify:playlist:37i9dQZF1DWZeKCadgRdKQ"; // <-- VERVANG DIT met jouw playlist
+  var PLAYLIST_URI = "spotify:playlist:37i9dQZF1EIgKXhXqo61vc";
   var SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state";
 
   var LS_VERIFIER = "spotify_pkce_verifier";
@@ -477,10 +469,15 @@
   var LS_TOKEN_EXPIRES = "spotify_token_expires";
   var LS_REFRESH_TOKEN = "spotify_refresh_token";
 
-  var statusEl = document.getElementById("spotify-status");
-  var loginBtn = document.getElementById("spotify-login-btn");
-  var playBtn = document.getElementById("spotify-play-btn");
-  var pauseBtn = document.getElementById("spotify-pause-btn");
+  var loginBtn = document.getElementById("mp-login-btn");
+  var mpBody = document.getElementById("mp-body");
+  var mpArt = document.getElementById("mp-art");
+  var mpTitle = document.getElementById("mp-title");
+  var mpArtist = document.getElementById("mp-artist");
+  var mpBars = document.getElementById("mp-bars");
+  var toggleBtn = document.getElementById("mp-toggle-btn");
+  var prevBtn = document.getElementById("mp-prev-btn");
+  var nextBtn = document.getElementById("mp-next-btn");
 
   var player = null;
   var deviceId = null;
@@ -593,17 +590,33 @@
   }
 
   /* ---------- UI states ---------- */
+  var isPlaying = false;
+  var startedOnce = false;
+
   function showLoggedOut(){
-    statusEl.textContent = "Log in met Spotify om je studiemuziek te starten.";
     loginBtn.style.display = "block";
-    playBtn.style.display = "none";
-    pauseBtn.style.display = "none";
+    mpBody.style.display = "none";
   }
 
   function showLoggedIn(){
-    statusEl.textContent = "Ingelogd. Klaar om af te spelen.";
     loginBtn.style.display = "none";
-    playBtn.style.display = "block";
+    mpBody.style.display = "flex";
+  }
+
+  function setPlayingUI(playing){
+    isPlaying = playing;
+    toggleBtn.textContent = playing ? "⏸" : "▶︎";
+    mpBars.classList.toggle("playing", playing);
+  }
+
+  function updateTrackInfo(track){
+    if (!track) return;
+    mpTitle.textContent = track.name || "—";
+    mpArtist.textContent = (track.artists || []).map(function(a){ return a.name; }).join(", ") || "—";
+    var art = track.album && track.album.images && track.album.images.length
+      ? track.album.images[track.album.images.length - 1].url
+      : "";
+    if (art) mpArt.src = art;
   }
 
   /* ---------- Handle redirect back from Spotify ---------- */
@@ -611,7 +624,6 @@
     var params = new URLSearchParams(window.location.search);
     var code = params.get("code");
     if (code){
-      statusEl.textContent = "Bezig met inloggen...";
       exchangeCodeForToken(code).then(function(){
         // Verwijder ?code=... uit de URL
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -645,14 +657,23 @@
       showLoggedIn();
     });
 
-    player.addListener("initialization_error", function(){ statusEl.textContent = "Kon speler niet starten (browser-ondersteuning)."; });
+    player.addListener("player_state_changed", function(state){
+      if (!state) return;
+      setPlayingUI(!state.paused);
+      if (state.track_window && state.track_window.current_track){
+        updateTrackInfo(state.track_window.current_track);
+        startedOnce = true;
+      }
+    });
+
+    player.addListener("initialization_error", function(){ /* browser ondersteunt playback niet */ });
     player.addListener("authentication_error", function(){ showLoggedOut(); });
-    player.addListener("account_error", function(){ statusEl.textContent = "Spotify Premium is vereist voor afspelen in de browser."; });
+    player.addListener("account_error", function(){ /* Spotify Premium vereist */ });
 
     player.connect();
   }
 
-  function playPlaylist(){
+  function startPlaylist(){
     if (!deviceId) return;
     getValidToken().then(function(token){
       fetch("https://api.spotify.com/v1/me/player/play?device_id=" + deviceId, {
@@ -662,29 +683,46 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ context_uri: PLAYLIST_URI })
-      }).then(function(){
-        statusEl.textContent = "Muziek speelt. Kies je AirPods/HomePod via Control Center.";
-        playBtn.style.display = "none";
-        pauseBtn.style.display = "block";
+      }).then(function(res){
+        if (res.status === 204 || res.ok){
+          startedOnce = true;
+          setPlayingUI(true);
+        }
       });
     });
   }
 
-  function pausePlayback(){
+  function togglePlayback(){
+    if (!startedOnce){
+      startPlaylist();
+      return;
+    }
+    if (!player) return;
+    player.togglePlay();
+  }
+
+  function nextTrack(){
     getValidToken().then(function(token){
-      fetch("https://api.spotify.com/v1/me/player/pause", {
-        method: "PUT",
+      fetch("https://api.spotify.com/v1/me/player/next?device_id=" + deviceId, {
+        method: "POST",
         headers: { "Authorization": "Bearer " + token }
-      }).then(function(){
-        pauseBtn.style.display = "none";
-        playBtn.style.display = "block";
+      });
+    });
+  }
+
+  function prevTrack(){
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/previous?device_id=" + deviceId, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token }
       });
     });
   }
 
   loginBtn.addEventListener("click", redirectToSpotifyLogin);
-  playBtn.addEventListener("click", playPlaylist);
-  pauseBtn.addEventListener("click", pausePlayback);
+  toggleBtn.addEventListener("click", togglePlayback);
+  prevBtn.addEventListener("click", prevTrack);
+  nextBtn.addEventListener("click", nextTrack);
 
   if (!handleRedirect()){
     if (localStorage.getItem(LS_ACCESS_TOKEN)){
@@ -695,6 +733,114 @@
   }
 
 })();
-</script>
+</script>  <!-- ---------------- FLOATING MINI PLAYER ---------------- -->
+  <div id="mini-player" class="mini-player">
+    <button class="mp-login" id="mp-login-btn" type="button">🎧 Log in met Spotify</button>
+
+    <div class="mp-body" id="mp-body">
+      <div class="mp-art-wrap">
+        <img class="mp-art" id="mp-art" src="" alt="">
+        <div class="mp-bars" id="mp-bars">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="mp-info">
+        <div class="mp-title" id="mp-title">—</div>
+        <div class="mp-artist" id="mp-artist">—</div>
+      </div>
+      <div class="mp-controls">
+        <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
+        <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
+        <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .mini-player{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      z-index:9999;
+      background:var(--card);
+      border:1px solid var(--card-border);
+      border-radius:var(--radius);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      padding:10px;
+      font-family:var(--font-body);
+      color:var(--ink);
+      max-width:260px;
+      padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+    .mp-login{
+      background:var(--ink);
+      color:#0f0f11;
+      border:none;
+      border-radius:var(--radius-sm);
+      padding:10px 14px;
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      transition:opacity .15s var(--ease);
+    }
+    .mp-login:hover{opacity:.88;}
+    .mp-body{display:none; align-items:center; gap:10px;}
+    .mp-art-wrap{position:relative; flex-shrink:0; width:46px; height:46px;}
+    .mp-art{
+      width:46px; height:46px;
+      border-radius:8px;
+      object-fit:cover;
+      background:var(--bg-alt);
+      border:1px solid var(--card-border);
+      display:block;
+    }
+    .mp-bars{
+      position:absolute; inset:0;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      gap:3px;
+      background:rgba(15,15,17,.55);
+      border-radius:8px;
+    }
+    .mp-bars.playing{display:flex;}
+    .mp-bars span{
+      width:3px;
+      background:var(--ink);
+      border-radius:2px;
+      height:6px;
+      animation:mpwave 1s ease-in-out infinite;
+    }
+    .mp-bars span:nth-child(1){animation-delay:0s;}
+    .mp-bars span:nth-child(2){animation-delay:.2s;}
+    .mp-bars span:nth-child(3){animation-delay:.4s;}
+    .mp-bars span:nth-child(4){animation-delay:.1s;}
+    @keyframes mpwave{
+      0%,100%{height:5px;}
+      50%{height:18px;}
+    }
+    .mp-info{min-width:0; flex:1;}
+    .mp-title{
+      font-size:12.5px; font-weight:600;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .mp-artist{
+      font-size:11px; color:var(--ink-faint);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .mp-controls{display:flex; align-items:center; gap:2px; flex-shrink:0;}
+    .mp-btn{
+      background:none; border:none; color:var(--ink);
+      font-size:15px; cursor:pointer; padding:6px;
+      border-radius:8px;
+      transition:background .15s var(--ease);
+    }
+    .mp-btn:hover{background:var(--bg-alt);}
+    .mp-btn-main{font-size:16px;}
+    @media (prefers-reduced-motion: reduce){
+      .mp-bars span{animation:none; height:10px;}
+    }
+  </style>
+
 </body>
 </html>
