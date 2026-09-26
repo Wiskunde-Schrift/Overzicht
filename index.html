@@ -468,10 +468,8 @@
 (function(){
   "use strict";
 
-  var GEMINI_API_KEY = "AQ.Ab8RN6IF9NqvvvMwivH9QLrVXcBTO0XpZIdErQfTfp46f2SRqQ";
+  var WORKER_URL = "https://studiehub-gemini-proxy.parkerbergman10.workers.dev";
   var ALLOWED_HOST = "wiskunde-schrift.github.io";
-  var GEMINI_MODEL = "gemini-3.8-flash";
-  var GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent";
 
   var widget = document.getElementById("ai-widget");
   var bubble = document.getElementById("ai-bubble");
@@ -521,11 +519,10 @@
 
     var typingEl = addTyping();
 
-    fetch(GEMINI_URL, {
+    fetch(WORKER_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         contents: history,
