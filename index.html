@@ -307,7 +307,6 @@
 
       <div class="tabbar">
         <button type="button" class="tab-btn active" id="tab-btn-vakken">Kies een vak</button>
-        <button type="button" class="tab-btn" id="tab-btn-muziek">Muziek</button>
         <button type="button" class="tab-btn" id="tab-btn-instellingen">Instellingen</button>
       </div>
 
@@ -358,11 +357,6 @@
             <div class="tile-arrow">→</div>
           </a>
         </div>
-      </div>
-
-      <div class="tab-panel" id="tab-muziek">
-        <p class="section-label">Studiemuziek</p>
-        <p style="font-size:14px; color:var(--ink-dim);">Je muziekspeler vind je linksonder in beeld, op elke pagina.</p>
       </div>
 
       <div class="tab-panel" id="tab-instellingen">
@@ -432,24 +426,139 @@
 
   /* ---------------- TABS ---------------- */
   var tabBtnVakken = document.getElementById("tab-btn-vakken");
-  var tabBtnMuziek = document.getElementById("tab-btn-muziek");
   var tabBtnInstellingen = document.getElementById("tab-btn-instellingen");
   var tabVakken = document.getElementById("tab-vakken");
-  var tabMuziek = document.getElementById("tab-muziek");
   var tabInstellingen = document.getElementById("tab-instellingen");
 
   function showTab(name){
-    tabBtnVakken.classList.toggle("active", name === "vakken");
-    tabBtnMuziek.classList.toggle("active", name === "muziek");
-    tabBtnInstellingen.classList.toggle("active", name === "instellingen");
-    tabVakken.classList.toggle("active", name === "vakken");
-    tabMuziek.classList.toggle("active", name === "muziek");
-    tabInstellingen.classList.toggle("active", name === "instellingen");
+    var isVakken = name === "vakken";
+    tabBtnVakken.classList.toggle("active", isVakken);
+    tabBtnInstellingen.classList.toggle("active", !isVakken);
+    tabVakken.classList.toggle("active", isVakken);
+    tabInstellingen.classList.toggle("active", !isVakken);
   }
 
   tabBtnVakken.addEventListener("click", function(){ showTab("vakken"); });
-  tabBtnMuziek.addEventListener("click", function(){ showTab("muziek"); });
   tabBtnInstellingen.addEventListener("click", function(){ showTab("instellingen"); });
+
+})();
+</script>
+
+
+  <!-- ---------------- AI ASSISTENT (Gemini) ---------------- -->
+  <div id="ai-widget" class="ai-widget">
+    <button class="ai-bubble" id="ai-bubble" type="button" aria-label="Open AI-assistent">✨</button>
+
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-panel-header">
+        <span>Studie-assistent</span>
+        <button class="ai-close" id="ai-close-btn" type="button" aria-label="Sluiten">✕</button>
+      </div>
+      <div class="ai-messages" id="ai-messages">
+        <div class="ai-msg ai-msg-bot">Hoi! Waar kan ik je mee helpen bij het studeren?</div>
+      </div>
+      <form class="ai-input-row" id="ai-form" autocomplete="off">
+        <input class="ai-input" id="ai-input" type="text" placeholder="Stel een vraag..." aria-label="Bericht">
+        <button class="ai-send" id="ai-send-btn" type="submit" aria-label="Verstuur">➤</button>
+      </form>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var GEMINI_API_KEY = "AQ.Ab8RN6IF9NqvvvMwivH9QLrVXcBTO0XpZIdErQfTfp46f2SRqQ";
+  var ALLOWED_HOST = "wiskunde-schrift.github.io";
+  var GEMINI_MODEL = "gemini-2.0-flash";
+  var GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY;
+
+  var widget = document.getElementById("ai-widget");
+  var bubble = document.getElementById("ai-bubble");
+  var closeBtn = document.getElementById("ai-close-btn");
+  var messagesEl = document.getElementById("ai-messages");
+  var form = document.getElementById("ai-form");
+  var input = document.getElementById("ai-input");
+
+  var history = []; // { role: "user"|"model", parts: [{text}] }
+
+  function openPanel(){
+    widget.classList.add("open");
+    input.focus();
+  }
+  function closePanel(){
+    widget.classList.remove("open");
+  }
+
+  bubble.addEventListener("click", openPanel);
+  closeBtn.addEventListener("click", closePanel);
+
+  function addMessage(text, who){
+    var div = document.createElement("div");
+    div.className = "ai-msg " + (who === "user" ? "ai-msg-user" : "ai-msg-bot");
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function addTyping(){
+    var div = document.createElement("div");
+    div.className = "ai-msg ai-msg-bot ai-typing";
+    div.innerHTML = "<span></span><span></span><span></span>";
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function askGemini(question){
+    if (window.location.hostname !== ALLOWED_HOST){
+      addMessage("De assistent werkt alleen op de officiële studiehub-website.", "bot");
+      return;
+    }
+
+    history.push({ role: "user", parts: [{ text: question }] });
+
+    var typingEl = addTyping();
+
+    fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: history,
+        systemInstruction: {
+          parts: [{ text: "Je bent een behulpzame studie-assistent voor een middelbare scholier (5G). Antwoord kort, duidelijk en in het Nederlands, tenzij er om een andere taal wordt gevraagd." }]
+        }
+      })
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        typingEl.remove();
+        var reply = "Sorry, ik kon geen antwoord genereren.";
+        if (data && data.candidates && data.candidates.length &&
+            data.candidates[0].content && data.candidates[0].content.parts &&
+            data.candidates[0].content.parts.length){
+          reply = data.candidates[0].content.parts.map(function(p){ return p.text || ""; }).join("");
+        } else if (data && data.error && data.error.message){
+          reply = "Fout: " + data.error.message;
+        }
+        addMessage(reply, "bot");
+        history.push({ role: "model", parts: [{ text: reply }] });
+      })
+      .catch(function(err){
+        typingEl.remove();
+        addMessage("Er ging iets mis met de verbinding. Probeer het opnieuw.", "bot");
+      });
+  }
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var val = input.value.trim();
+    if (!val) return;
+    addMessage(val, "user");
+    input.value = "";
+    askGemini(val);
+  });
 
 })();
 </script>
@@ -834,6 +943,128 @@
 
 })();
 </script>
+
+  <style>
+    .ai-widget{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      z-index:9999;
+      font-family:var(--font-body);
+      color:var(--ink);
+    }
+    .ai-bubble{
+      width:52px; height:52px;
+      border-radius:50%;
+      border:1px solid var(--card-border);
+      background:var(--card);
+      color:var(--ink);
+      font-size:20px;
+      cursor:pointer;
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      transition:transform .15s var(--ease), border-color .2s var(--ease);
+    }
+    .ai-bubble:hover{border-color:var(--card-border-hover); transform:translateY(-1px);}
+    .ai-widget.open .ai-bubble{display:none;}
+
+    .ai-panel{
+      display:none;
+      flex-direction:column;
+      width:300px;
+      max-width:calc(100vw - 32px);
+      height:min(420px, 70vh);
+      background:var(--card);
+      border:1px solid var(--card-border);
+      border-radius:var(--radius);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .ai-widget.open .ai-panel{display:flex;}
+
+    .ai-panel-header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid var(--card-border);
+      font-size:13px; font-weight:600;
+    }
+    .ai-close{
+      background:none; border:none; color:var(--ink-faint);
+      font-size:14px; cursor:pointer; padding:4px;
+      border-radius:6px;
+    }
+    .ai-close:hover{color:var(--ink); background:var(--bg-alt);}
+
+    .ai-messages{
+      flex:1;
+      overflow-y:auto;
+      padding:12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .ai-msg{
+      max-width:85%;
+      padding:8px 11px;
+      border-radius:12px;
+      font-size:13px;
+      line-height:1.4;
+      white-space:pre-wrap;
+    }
+    .ai-msg-bot{
+      align-self:flex-start;
+      background:var(--bg-alt);
+      border:1px solid var(--card-border);
+      color:var(--ink);
+      border-bottom-left-radius:4px;
+    }
+    .ai-msg-user{
+      align-self:flex-end;
+      background:var(--ink);
+      color:#0f0f11;
+      font-weight:500;
+      border-bottom-right-radius:4px;
+    }
+    .ai-typing{display:flex; align-items:center; gap:4px; padding:11px;}
+    .ai-typing span{
+      width:5px; height:5px; border-radius:50%;
+      background:var(--ink-faint);
+      animation:aityping 1s ease-in-out infinite;
+    }
+    .ai-typing span:nth-child(2){animation-delay:.15s;}
+    .ai-typing span:nth-child(3){animation-delay:.3s;}
+    @keyframes aityping{
+      0%,100%{opacity:.3; transform:translateY(0);}
+      50%{opacity:1; transform:translateY(-2px);}
+    }
+
+    .ai-input-row{
+      display:flex; gap:8px;
+      padding:10px;
+      border-top:1px solid var(--card-border);
+    }
+    .ai-input{
+      flex:1;
+      background:var(--bg-alt);
+      border:1px solid var(--card-border);
+      border-radius:var(--radius-sm);
+      color:var(--ink);
+      font-size:13px;
+      padding:9px 12px;
+      min-width:0;
+    }
+    .ai-input:focus{outline:none; border-color:var(--accent-line);}
+    .ai-send{
+      background:var(--ink);
+      color:#0f0f11;
+      border:none;
+      border-radius:var(--radius-sm);
+      width:36px;
+      font-size:14px;
+      cursor:pointer;
+      transition:opacity .15s var(--ease);
+    }
+    .ai-send:hover{opacity:.88;}
+  </style>
 
   <style>
     .mini-player{
