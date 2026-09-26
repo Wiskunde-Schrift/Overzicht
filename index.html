@@ -307,6 +307,7 @@
 
       <div class="tabbar">
         <button type="button" class="tab-btn active" id="tab-btn-vakken">Kies een vak</button>
+        <button type="button" class="tab-btn" id="tab-btn-muziek">Muziek</button>
         <button type="button" class="tab-btn" id="tab-btn-instellingen">Instellingen</button>
       </div>
 
@@ -359,6 +360,17 @@
         </div>
       </div>
 
+      <div class="tab-panel" id="tab-muziek">
+        <p class="section-label">Studiemuziek</p>
+        <div class="pin-card" style="max-width:420px;">
+          <p id="spotify-status">Log in met Spotify om je studiemuziek te starten.</p>
+          <button class="pin-submit" id="spotify-login-btn" type="button" style="width:100%; padding:12px 0;">Log in met Spotify</button>
+          <button class="pin-submit" id="spotify-play-btn" type="button" style="display:none; width:100%; padding:12px 0; margin-top:10px;">▶︎ Start studiemuziek</button>
+          <button class="pin-submit" id="spotify-pause-btn" type="button" style="display:none; width:100%; padding:12px 0; margin-top:10px; background:var(--card-border-hover); color:var(--ink);">⏸ Pauzeer</button>
+          <p style="margin-top:14px; font-size:12px; color:var(--ink-faint);">Zodra de muziek speelt, verschijnt "Studiehub" als apparaat in je AirPlay- of Spotify Connect-lijst. Kies daar zelf je AirPods of HomePod.</p>
+        </div>
+      </div>
+
       <div class="tab-panel" id="tab-instellingen">
         <p class="section-label">Snelle links</p>
         <div class="link-grid">
@@ -373,6 +385,8 @@
   </main>
 
   <footer>Parker Bergman · 5G · Studiehub</footer>
+
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
 
 <script>
 (function(){
@@ -424,20 +438,261 @@
 
   /* ---------------- TABS ---------------- */
   var tabBtnVakken = document.getElementById("tab-btn-vakken");
+  var tabBtnMuziek = document.getElementById("tab-btn-muziek");
   var tabBtnInstellingen = document.getElementById("tab-btn-instellingen");
   var tabVakken = document.getElementById("tab-vakken");
+  var tabMuziek = document.getElementById("tab-muziek");
   var tabInstellingen = document.getElementById("tab-instellingen");
 
   function showTab(name){
-    var isVakken = name === "vakken";
-    tabBtnVakken.classList.toggle("active", isVakken);
-    tabBtnInstellingen.classList.toggle("active", !isVakken);
-    tabVakken.classList.toggle("active", isVakken);
-    tabInstellingen.classList.toggle("active", !isVakken);
+    tabBtnVakken.classList.toggle("active", name === "vakken");
+    tabBtnMuziek.classList.toggle("active", name === "muziek");
+    tabBtnInstellingen.classList.toggle("active", name === "instellingen");
+    tabVakken.classList.toggle("active", name === "vakken");
+    tabMuziek.classList.toggle("active", name === "muziek");
+    tabInstellingen.classList.toggle("active", name === "instellingen");
   }
 
   tabBtnVakken.addEventListener("click", function(){ showTab("vakken"); });
+  tabBtnMuziek.addEventListener("click", function(){ showTab("muziek"); });
   tabBtnInstellingen.addEventListener("click", function(){ showTab("instellingen"); });
+
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= CONFIG ================= */
+  var CLIENT_ID = "c0217c44e28f422494a5c0b26799daac";
+  var REDIRECT_URI = "https://wiskunde-schrift.github.io/"; // moet exact overeenkomen met Spotify Dashboard
+  // Zet hier je eigen studie-playlist link/URI. Voorbeeld playlist-link:
+  // https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ
+  var PLAYLIST_URI = "spotify:playlist:37i9dQZF1DWZeKCadgRdKQ"; // <-- VERVANG DIT met jouw playlist
+  var SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state";
+
+  var LS_VERIFIER = "spotify_pkce_verifier";
+  var LS_ACCESS_TOKEN = "spotify_access_token";
+  var LS_TOKEN_EXPIRES = "spotify_token_expires";
+  var LS_REFRESH_TOKEN = "spotify_refresh_token";
+
+  var statusEl = document.getElementById("spotify-status");
+  var loginBtn = document.getElementById("spotify-login-btn");
+  var playBtn = document.getElementById("spotify-play-btn");
+  var pauseBtn = document.getElementById("spotify-pause-btn");
+
+  var player = null;
+  var deviceId = null;
+
+  /* ---------- PKCE helpers ---------- */
+  function generateRandomString(length){
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var text = "";
+    var randomValues = crypto.getRandomValues(new Uint8Array(length));
+    for (var i = 0; i < length; i++){
+      text += possible[randomValues[i] % possible.length];
+    }
+    return text;
+  }
+
+  function sha256(plain){
+    var encoder = new TextEncoder();
+    var data = encoder.encode(plain);
+    return crypto.subtle.digest("SHA-256", data);
+  }
+
+  function base64urlencode(buffer){
+    var bytes = new Uint8Array(buffer);
+    var str = "";
+    for (var i = 0; i < bytes.byteLength; i++){
+      str += String.fromCharCode(bytes[i]);
+    }
+    return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function redirectToSpotifyLogin(){
+    var verifier = generateRandomString(64);
+    sessionStorage.setItem(LS_VERIFIER, verifier);
+
+    sha256(verifier).then(function(hashed){
+      var challenge = base64urlencode(hashed);
+      var params = new URLSearchParams({
+        response_type: "code",
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        code_challenge_method: "S256",
+        code_challenge: challenge,
+        redirect_uri: REDIRECT_URI
+      });
+      window.location.href = "https://accounts.spotify.com/authorize?" + params.toString();
+    });
+  }
+
+  function exchangeCodeForToken(code){
+    var verifier = sessionStorage.getItem(LS_VERIFIER);
+    var body = new URLSearchParams({
+      client_id: CLIENT_ID,
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: REDIRECT_URI,
+      code_verifier: verifier
+    });
+
+    return fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body
+    }).then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.access_token){
+          storeToken(data);
+        }
+        return data;
+      });
+  }
+
+  function refreshToken(){
+    var refresh = localStorage.getItem(LS_REFRESH_TOKEN);
+    if (!refresh) return Promise.reject("Geen refresh token");
+    var body = new URLSearchParams({
+      client_id: CLIENT_ID,
+      grant_type: "refresh_token",
+      refresh_token: refresh
+    });
+    return fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body
+    }).then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.access_token){
+          storeToken(data);
+        }
+        return data;
+      });
+  }
+
+  function storeToken(data){
+    localStorage.setItem(LS_ACCESS_TOKEN, data.access_token);
+    localStorage.setItem(LS_TOKEN_EXPIRES, String(Date.now() + (data.expires_in * 1000)));
+    if (data.refresh_token){
+      localStorage.setItem(LS_REFRESH_TOKEN, data.refresh_token);
+    }
+  }
+
+  function getValidToken(){
+    var token = localStorage.getItem(LS_ACCESS_TOKEN);
+    var expires = parseInt(localStorage.getItem(LS_TOKEN_EXPIRES) || "0", 10);
+    if (token && Date.now() < expires - 5000){
+      return Promise.resolve(token);
+    }
+    return refreshToken().then(function(){
+      return localStorage.getItem(LS_ACCESS_TOKEN);
+    });
+  }
+
+  /* ---------- UI states ---------- */
+  function showLoggedOut(){
+    statusEl.textContent = "Log in met Spotify om je studiemuziek te starten.";
+    loginBtn.style.display = "block";
+    playBtn.style.display = "none";
+    pauseBtn.style.display = "none";
+  }
+
+  function showLoggedIn(){
+    statusEl.textContent = "Ingelogd. Klaar om af te spelen.";
+    loginBtn.style.display = "none";
+    playBtn.style.display = "block";
+  }
+
+  /* ---------- Handle redirect back from Spotify ---------- */
+  function handleRedirect(){
+    var params = new URLSearchParams(window.location.search);
+    var code = params.get("code");
+    if (code){
+      statusEl.textContent = "Bezig met inloggen...";
+      exchangeCodeForToken(code).then(function(){
+        // Verwijder ?code=... uit de URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        initPlayer();
+      });
+      return true;
+    }
+    return false;
+  }
+
+  /* ---------- Web Playback SDK ---------- */
+  window.onSpotifyWebPlaybackSDKReady = function(){
+    if (localStorage.getItem(LS_ACCESS_TOKEN)){
+      initPlayer();
+    }
+  };
+
+  function initPlayer(){
+    if (player) { showLoggedIn(); return; }
+
+    player = new Spotify.Player({
+      name: "Studiehub",
+      getOAuthToken: function(cb){
+        getValidToken().then(function(token){ cb(token); });
+      },
+      volume: 0.7
+    });
+
+    player.addListener("ready", function(data){
+      deviceId = data.device_id;
+      showLoggedIn();
+    });
+
+    player.addListener("initialization_error", function(){ statusEl.textContent = "Kon speler niet starten (browser-ondersteuning)."; });
+    player.addListener("authentication_error", function(){ showLoggedOut(); });
+    player.addListener("account_error", function(){ statusEl.textContent = "Spotify Premium is vereist voor afspelen in de browser."; });
+
+    player.connect();
+  }
+
+  function playPlaylist(){
+    if (!deviceId) return;
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/play?device_id=" + deviceId, {
+        method: "PUT",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ context_uri: PLAYLIST_URI })
+      }).then(function(){
+        statusEl.textContent = "Muziek speelt. Kies je AirPods/HomePod via Control Center.";
+        playBtn.style.display = "none";
+        pauseBtn.style.display = "block";
+      });
+    });
+  }
+
+  function pausePlayback(){
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/pause", {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + token }
+      }).then(function(){
+        pauseBtn.style.display = "none";
+        playBtn.style.display = "block";
+      });
+    });
+  }
+
+  loginBtn.addEventListener("click", redirectToSpotifyLogin);
+  playBtn.addEventListener("click", playPlaylist);
+  pauseBtn.addEventListener("click", pausePlayback);
+
+  if (!handleRedirect()){
+    if (localStorage.getItem(LS_ACCESS_TOKEN)){
+      showLoggedIn();
+    } else {
+      showLoggedOut();
+    }
+  }
 
 })();
 </script>
