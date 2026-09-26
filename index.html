@@ -454,6 +454,29 @@
 })();
 </script>
 
+  <!-- ---------------- FLOATING MINI PLAYER ---------------- -->
+  <div id="mini-player" class="mini-player">
+    <button class="mp-login" id="mp-login-btn" type="button">🎧 Log in met Spotify</button>
+
+    <div class="mp-body" id="mp-body">
+      <div class="mp-art-wrap">
+        <img class="mp-art" id="mp-art" src="" alt="">
+        <div class="mp-bars" id="mp-bars">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="mp-info">
+        <div class="mp-title" id="mp-title">—</div>
+        <div class="mp-artist" id="mp-artist">—</div>
+      </div>
+      <div class="mp-controls">
+        <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
+        <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
+        <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function(){
   "use strict";
@@ -733,28 +756,7 @@
   }
 
 })();
-</script>  <!-- ---------------- FLOATING MINI PLAYER ---------------- -->
-  <div id="mini-player" class="mini-player">
-    <button class="mp-login" id="mp-login-btn" type="button">🎧 Log in met Spotify</button>
-
-    <div class="mp-body" id="mp-body">
-      <div class="mp-art-wrap">
-        <img class="mp-art" id="mp-art" src="" alt="">
-        <div class="mp-bars" id="mp-bars">
-          <span></span><span></span><span></span><span></span>
-        </div>
-      </div>
-      <div class="mp-info">
-        <div class="mp-title" id="mp-title">—</div>
-        <div class="mp-artist" id="mp-artist">—</div>
-      </div>
-      <div class="mp-controls">
-        <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
-        <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
-        <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>
-      </div>
-    </div>
-  </div>
+</script>
 
   <style>
     .mini-player{
