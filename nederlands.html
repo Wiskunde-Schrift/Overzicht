@@ -485,6 +485,59 @@
   @media(max-width:480px){
     .hero{padding:44px 16px 32px;}
   }
+
+  /* ================= IDENTITEIT: NEDERLANDS — literair/editoriaal ================= */
+  :root{
+    --radius:4px;
+    --radius-sm:2px;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(180deg, transparent, transparent 31px, rgba(255,255,255,.05) 32px);
+    pointer-events:none;
+  }
+  .eyebrow{
+    font-family:var(--font-display);
+    font-style:italic;
+    font-size:15px;
+  }
+  .section-label{
+    font-family:var(--font-display);
+    font-weight:400;
+    font-style:italic;
+    letter-spacing:.02em;
+    text-transform:none;
+    font-size:15px;
+  }
+
+  /* ================= DIEPTE: schaduwlagen voor voor/achter-gevoel ================= */
+  .card, .pin-card{
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.35),
+      0 10px 28px -14px rgba(0,0,0,.6);
+  }
+  .card{
+    transition:border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    box-shadow:
+      0 2px 4px rgba(0,0,0,.4),
+      0 18px 36px -16px rgba(0,0,0,.65);
+  }
+  .hero{
+    box-shadow: 0 30px 60px -40px rgba(0,0,0,.7);
+  }
+
+  /* ================= iPhone: voorkom automatisch inzoomen op formuliervelden ================= */
+  @media (max-width:600px){
+    input, select, textarea{ font-size:16px !important; }
+  }
+  /* iPhone: geen blauwe tik-highlight, geen "rubber band" bijeffecten op knoppen */
+  button, a{ -webkit-tap-highlight-color:transparent; }
+  html{ overscroll-behavior-y:none; }
+
 </style>
 </head>
 <body>
@@ -1234,6 +1287,7 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
       z-index:9999;
       font-family:var(--font-body);
       color:var(--ink);
+      padding-bottom:env(safe-area-inset-bottom, 0px);
     }
     .ai-bubble{
       width:52px; height:52px;
@@ -1350,7 +1404,7 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
 
   <!-- ---------------- AI ASSISTENT (Gemini) ---------------- -->
   <div id="ai-widget" class="ai-widget">
-    <button class="ai-bubble" id="ai-bubble" type="button" aria-label="Open AI-assistent">✨</button>
+    <button class="ai-bubble" id="ai-bubble" type="button" aria-label="Open AI-assistent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg></button>
 
     <div class="ai-panel" id="ai-panel">
       <div class="ai-panel-header">
@@ -1369,7 +1423,7 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
 
   <!-- ---------------- FLOATING MINI PLAYER ---------------- -->
   <div id="mini-player" class="mini-player">
-    <button class="mp-login" id="mp-login-btn" type="button">🎧 Log in met Spotify</button>
+    <button class="mp-login" id="mp-login-btn" type="button">Log in met Spotify</button>
 
     <!-- Collapsed: alleen hoes + play/pauze -->
     <button class="mp-collapsed" id="mp-collapsed" type="button" aria-label="Open muziekspeler">
@@ -1394,7 +1448,7 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
         <div class="mp-artist" id="mp-artist">—</div>
       </div>
       <div class="mp-controls">
-        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle">🔀</button>
+        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle">&#8646;</button>
         <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
         <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
         <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>

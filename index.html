@@ -313,6 +313,38 @@
   @media(max-width:480px){
     .hero{padding:44px 16px 32px;}
   }
+
+  /* ================= DIEPTE: schaduwlagen voor voor/achter-gevoel ================= */
+  .pin-card{
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.35),
+      0 10px 28px -14px rgba(0,0,0,.6);
+  }
+  .tile{
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.35),
+      0 10px 28px -14px rgba(0,0,0,.6);
+  }
+  a.tile:hover{
+    transform:translateY(-3px);
+    box-shadow:
+      0 2px 4px rgba(0,0,0,.4),
+      0 18px 36px -16px rgba(0,0,0,.65);
+  }
+  .link-btn{
+    box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px -12px rgba(0,0,0,.55);
+  }
+  .hero{
+    box-shadow: 0 30px 60px -40px rgba(0,0,0,.7);
+  }
+
+  /* ================= iPhone: voorkom automatisch inzoomen op formuliervelden ================= */
+  @media (max-width:600px){
+    input, select, textarea{ font-size:16px !important; }
+  }
+  button, a{ -webkit-tap-highlight-color:transparent; }
+  html{ overscroll-behavior-y:none; }
+
 </style>
 </head>
 <body>
@@ -363,7 +395,7 @@
         </a>
 
         <a class="tile" href="biologie.html" style="--tile-color:#2ecc71;">
-          <div class="tile-icon">🧬</div>
+          <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3c0 5 10 5 10 10s-10 5-10 10M17 3c0 5-10 5-10 10s10 5 10 10"/><path d="M8.2 7h7.6M8.2 17h7.6"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Biologie</div>
             <div class="tile-sub">Thema's, Binas legenda, foutenlogboek</div>
@@ -372,7 +404,7 @@
         </a>
 
         <a class="tile" href="scheikunde.html" style="--tile-color:#e74c3c;">
-          <div class="tile-icon">⚗️</div>
+          <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3h4M11 3v6l-6 11a1.2 1.2 0 0 0 1.1 1.7h11.8a1.2 1.2 0 0 0 1.1-1.7L13 9V3"/><path d="M8.5 15h7"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Scheikunde</div>
             <div class="tile-sub">Hoofdstukken, mol- &amp; pH-rekenmachine, Binas legenda</div>
@@ -381,7 +413,7 @@
         </a>
 
         <a class="tile" href="natuurkunde.html" style="--tile-color:#3498db;">
-          <div class="tile-icon">⚛️</div>
+          <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Natuurkunde</div>
             <div class="tile-sub">Newton hoofdstukken, Binas legenda, eenheden omrekenen</div>
@@ -390,7 +422,7 @@
         </a>
 
         <a class="tile" href="nederlands.html" style="--tile-color:#ffffff;">
-          <div class="tile-icon">📖</div>
+          <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5c-2-1.3-4.4-2-7-2v14c2.6 0 5 .7 7 2 2-1.3 4.4-2 7-2V3c-2.6 0-5 .7-7 2Z"/><path d="M12 5v14"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Nederlands</div>
             <div class="tile-sub">Leeslijst, alinea-opbouw, dyslexie-leesmodus</div>
@@ -505,7 +537,7 @@
 
   <!-- ---------------- AI ASSISTENT (Gemini) ---------------- -->
   <div id="ai-widget" class="ai-widget">
-    <button class="ai-bubble" id="ai-bubble" type="button" aria-label="Open AI-assistent">✨</button>
+    <button class="ai-bubble" id="ai-bubble" type="button" aria-label="Open AI-assistent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg></button>
 
     <div class="ai-panel" id="ai-panel">
       <div class="ai-panel-header">
@@ -623,7 +655,7 @@
 
   <!-- ---------------- FLOATING MINI PLAYER ---------------- -->
   <div id="mini-player" class="mini-player">
-    <button class="mp-login" id="mp-login-btn" type="button">🎧 Log in met Spotify</button>
+    <button class="mp-login" id="mp-login-btn" type="button">Log in met Spotify</button>
 
     <!-- Collapsed: alleen hoes + play/pauze -->
     <button class="mp-collapsed" id="mp-collapsed" type="button" aria-label="Open muziekspeler">
@@ -648,7 +680,7 @@
         <div class="mp-artist" id="mp-artist">—</div>
       </div>
       <div class="mp-controls">
-        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle">🔀</button>
+        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle">&#8646;</button>
         <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
         <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
         <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>
@@ -1011,6 +1043,7 @@
       z-index:9999;
       font-family:var(--font-body);
       color:var(--ink);
+      padding-bottom:env(safe-area-inset-bottom, 0px);
     }
     .ai-bubble{
       width:52px; height:52px;
