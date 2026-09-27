@@ -1366,5 +1366,575 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
       </form>
     </div>
   </div>
+
+  <!-- ---------------- FLOATING MINI PLAYER ---------------- -->
+  <div id="mini-player" class="mini-player">
+    <button class="mp-login" id="mp-login-btn" type="button">🎧 Log in met Spotify</button>
+
+    <!-- Collapsed: alleen hoes + play/pauze -->
+    <button class="mp-collapsed" id="mp-collapsed" type="button" aria-label="Open muziekspeler">
+      <img class="mp-art-sm" id="mp-art-sm" src="" alt="">
+      <div class="mp-bars mp-bars-sm" id="mp-bars-sm">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span class="mp-mini-toggle" id="mp-mini-toggle">▶︎</span>
+      <span class="mp-live-dot" aria-hidden="true"></span>
+    </button>
+
+    <!-- Uitgeklapt: volledige bediening -->
+    <div class="mp-body" id="mp-body">
+      <div class="mp-art-wrap">
+        <img class="mp-art" id="mp-art" src="" alt="">
+        <div class="mp-bars" id="mp-bars">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="mp-info">
+        <div class="mp-title" id="mp-title">—</div>
+        <div class="mp-artist" id="mp-artist">—</div>
+      </div>
+      <div class="mp-controls">
+        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle">🔀</button>
+        <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
+        <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
+        <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= CONFIG ================= */
+  var CLIENT_ID = "c0217c44e28f422494a5c0b26799daac";
+  var REDIRECT_URI = "https://wiskunde-schrift.github.io/Overzicht/index.html"; // moet exact overeenkomen met Spotify Dashboard
+  var PLAYLIST_URI = "spotify:playlist:37i9dQZF1EIgKXhXqo61vc";
+  var SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state";
+
+  var LS_VERIFIER = "spotify_pkce_verifier";
+  var LS_ACCESS_TOKEN = "spotify_access_token";
+  var LS_TOKEN_EXPIRES = "spotify_token_expires";
+  var LS_REFRESH_TOKEN = "spotify_refresh_token";
+
+  var miniPlayer = document.getElementById("mini-player");
+  var loginBtn = document.getElementById("mp-login-btn");
+  var collapsedBtn = document.getElementById("mp-collapsed");
+  var mpArtSm = document.getElementById("mp-art-sm");
+  var mpBarsSm = document.getElementById("mp-bars-sm");
+  var mpMiniToggle = document.getElementById("mp-mini-toggle");
+  var mpBody = document.getElementById("mp-body");
+  var mpArtWrap = document.querySelector(".mp-art-wrap");
+  var mpArt = document.getElementById("mp-art");
+  var mpTitle = document.getElementById("mp-title");
+  var mpArtist = document.getElementById("mp-artist");
+  var mpBars = document.getElementById("mp-bars");
+  var shuffleBtn = document.getElementById("mp-shuffle-btn");
+  var toggleBtn = document.getElementById("mp-toggle-btn");
+  var prevBtn = document.getElementById("mp-prev-btn");
+  var nextBtn = document.getElementById("mp-next-btn");
+
+  var player = null;
+  var deviceId = null;
+
+  /* ---------- PKCE helpers ---------- */
+  function generateRandomString(length){
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var text = "";
+    var randomValues = crypto.getRandomValues(new Uint8Array(length));
+    for (var i = 0; i < length; i++){
+      text += possible[randomValues[i] % possible.length];
+    }
+    return text;
+  }
+
+  function sha256(plain){
+    var encoder = new TextEncoder();
+    var data = encoder.encode(plain);
+    return crypto.subtle.digest("SHA-256", data);
+  }
+
+  function base64urlencode(buffer){
+    var bytes = new Uint8Array(buffer);
+    var str = "";
+    for (var i = 0; i < bytes.byteLength; i++){
+      str += String.fromCharCode(bytes[i]);
+    }
+    return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function redirectToSpotifyLogin(){
+    var verifier = generateRandomString(64);
+    sessionStorage.setItem(LS_VERIFIER, verifier);
+
+    sha256(verifier).then(function(hashed){
+      var challenge = base64urlencode(hashed);
+      var params = new URLSearchParams({
+        response_type: "code",
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        code_challenge_method: "S256",
+        code_challenge: challenge,
+        redirect_uri: REDIRECT_URI
+      });
+      window.location.href = "https://accounts.spotify.com/authorize?" + params.toString();
+    });
+  }
+
+  function exchangeCodeForToken(code){
+    var verifier = sessionStorage.getItem(LS_VERIFIER);
+    var body = new URLSearchParams({
+      client_id: CLIENT_ID,
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: REDIRECT_URI,
+      code_verifier: verifier
+    });
+
+    return fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body
+    }).then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.access_token){
+          storeToken(data);
+        }
+        return data;
+      });
+  }
+
+  function refreshToken(){
+    var refresh = localStorage.getItem(LS_REFRESH_TOKEN);
+    if (!refresh) return Promise.reject("Geen refresh token");
+    var body = new URLSearchParams({
+      client_id: CLIENT_ID,
+      grant_type: "refresh_token",
+      refresh_token: refresh
+    });
+    return fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body
+    }).then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.access_token){
+          storeToken(data);
+        }
+        return data;
+      });
+  }
+
+  function storeToken(data){
+    localStorage.setItem(LS_ACCESS_TOKEN, data.access_token);
+    localStorage.setItem(LS_TOKEN_EXPIRES, String(Date.now() + (data.expires_in * 1000)));
+    if (data.refresh_token){
+      localStorage.setItem(LS_REFRESH_TOKEN, data.refresh_token);
+    }
+  }
+
+  function getValidToken(){
+    var token = localStorage.getItem(LS_ACCESS_TOKEN);
+    var expires = parseInt(localStorage.getItem(LS_TOKEN_EXPIRES) || "0", 10);
+    if (token && Date.now() < expires - 5000){
+      return Promise.resolve(token);
+    }
+    return refreshToken().then(function(){
+      return localStorage.getItem(LS_ACCESS_TOKEN);
+    });
+  }
+
+  /* ---------- UI states ---------- */
+  var isPlaying = false;
+  var isShuffled = false;
+  var startedOnce = false;
+  var idleTimer = null;
+
+  function showLoggedOut(){
+    miniPlayer.classList.remove("logged-in", "collapsed");
+    loginBtn.style.display = "block";
+  }
+
+  function showLoggedIn(){
+    loginBtn.style.display = "none";
+    miniPlayer.classList.add("logged-in", "collapsed"); // start ingeklapt
+  }
+
+  function expandPlayer(){
+    miniPlayer.classList.remove("collapsed");
+    resetIdleTimer();
+  }
+
+  function collapsePlayer(){
+    miniPlayer.classList.add("collapsed");
+    resetIdleTimer();
+  }
+
+  function setPlayingUI(playing){
+    isPlaying = playing;
+    var icon = playing ? "⏸" : "▶︎";
+    toggleBtn.textContent = icon;
+    mpMiniToggle.textContent = icon;
+    mpBars.classList.toggle("playing", playing);
+    mpBarsSm.classList.toggle("playing", playing);
+  }
+
+  function setShuffleUI(shuffled){
+    isShuffled = shuffled;
+    shuffleBtn.classList.toggle("active", shuffled);
+  }
+
+  function updateTrackInfo(track){
+    if (!track) return;
+    mpTitle.textContent = track.name || "—";
+    mpArtist.textContent = (track.artists || []).map(function(a){ return a.name; }).join(", ") || "—";
+    var art = track.album && track.album.images && track.album.images.length
+      ? track.album.images[track.album.images.length - 1].url
+      : "";
+    if (art){ mpArt.src = art; mpArtSm.src = art; }
+  }
+
+  /* ---------- Idle fade: valt rustig weg als je niks aanraakt ---------- */
+  function resetIdleTimer(){
+    miniPlayer.classList.remove("idle");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){
+      miniPlayer.classList.add("idle");
+    }, 4000);
+  }
+  ["mousemove","mouseenter","touchstart","click","focusin"].forEach(function(evt){
+    miniPlayer.addEventListener(evt, resetIdleTimer);
+  });
+
+  /* ---------- Handle redirect back from Spotify ---------- */
+  function handleRedirect(){
+    var params = new URLSearchParams(window.location.search);
+    var code = params.get("code");
+    if (code){
+      exchangeCodeForToken(code).then(function(){
+        // Verwijder ?code=... uit de URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        initPlayer();
+      });
+      return true;
+    }
+    return false;
+  }
+
+  /* ---------- Web Playback SDK ---------- */
+  window.onSpotifyWebPlaybackSDKReady = function(){
+    if (localStorage.getItem(LS_ACCESS_TOKEN)){
+      initPlayer();
+    }
+  };
+
+  function initPlayer(){
+    if (player) { showLoggedIn(); return; }
+
+    player = new Spotify.Player({
+      name: "Studiehub",
+      getOAuthToken: function(cb){
+        getValidToken().then(function(token){ cb(token); });
+      },
+      volume: 0.7
+    });
+
+    player.addListener("ready", function(data){
+      deviceId = data.device_id;
+      showLoggedIn();
+    });
+
+    player.addListener("player_state_changed", function(state){
+      if (!state) return;
+      setPlayingUI(!state.paused);
+      setShuffleUI(!!state.shuffle);
+      if (state.track_window && state.track_window.current_track){
+        updateTrackInfo(state.track_window.current_track);
+        startedOnce = true;
+      }
+    });
+
+    player.addListener("initialization_error", function(){ /* browser ondersteunt playback niet */ });
+    player.addListener("authentication_error", function(){ showLoggedOut(); });
+    player.addListener("account_error", function(){ /* Spotify Premium vereist */ });
+
+    player.connect();
+  }
+
+  function startPlaylist(){
+    if (!deviceId) return;
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/play?device_id=" + deviceId, {
+        method: "PUT",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ context_uri: PLAYLIST_URI })
+      }).then(function(res){
+        if (res.status === 204 || res.ok){
+          startedOnce = true;
+          setPlayingUI(true);
+        }
+      });
+    });
+  }
+
+  function togglePlayback(){
+    if (!startedOnce){
+      startPlaylist();
+      return;
+    }
+    if (!player) return;
+    player.togglePlay();
+  }
+
+  function nextTrack(){
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/next?device_id=" + deviceId, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token }
+      });
+    });
+  }
+
+  function prevTrack(){
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/previous?device_id=" + deviceId, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token }
+      });
+    });
+  }
+
+  function toggleShuffle(){
+    var newState = !isShuffled;
+    getValidToken().then(function(token){
+      fetch("https://api.spotify.com/v1/me/player/shuffle?state=" + newState + "&device_id=" + deviceId, {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + token }
+      }).then(function(){ setShuffleUI(newState); });
+    });
+  }
+
+  loginBtn.addEventListener("click", redirectToSpotifyLogin);
+  toggleBtn.addEventListener("click", togglePlayback);
+  prevBtn.addEventListener("click", prevTrack);
+  nextBtn.addEventListener("click", nextTrack);
+  shuffleBtn.addEventListener("click", toggleShuffle);
+
+  collapsedBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    expandPlayer();
+  });
+
+  // Klik buiten de uitgeklapte speler -> weer inklappen
+  document.addEventListener("click", function(e){
+    if (!miniPlayer.classList.contains("logged-in")) return;
+    if (miniPlayer.classList.contains("collapsed")) return;
+    if (!miniPlayer.contains(e.target)) collapsePlayer();
+  });
+
+  mpArtWrap.addEventListener("click", togglePlayback);
+  resetIdleTimer();
+
+  if (!handleRedirect()){
+    if (localStorage.getItem(LS_ACCESS_TOKEN)){
+      showLoggedIn();
+    } else {
+      showLoggedOut();
+    }
+  }
+
+})();
+</script>
+
+  <style>
+    .mini-player{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:9999;
+      font-family:var(--font-body);
+      color:var(--ink);
+      max-width:260px;
+      padding-bottom:env(safe-area-inset-bottom, 0px);
+      transition:opacity .5s var(--ease);
+      opacity:1;
+    }
+    .mini-player.idle{opacity:.28;}
+    .mini-player.idle:hover,
+    .mini-player.idle:focus-within{opacity:1;}
+
+    .mp-login{
+      background:var(--ink);
+      color:#0f0f11;
+      border:none;
+      border-radius:var(--radius-sm);
+      padding:10px 14px;
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      transition:opacity .15s var(--ease), transform .15s var(--ease);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+    }
+    .mp-login:hover{opacity:.88; transform:translateY(-1px);}
+
+    @keyframes mpPopIn{
+      from{opacity:0; transform:scale(.82);}
+      to{opacity:1; transform:scale(1);}
+    }
+
+    /* ---- Collapsed bubble (hoes + play/pauze) ---- */
+    .mp-collapsed{
+      display:none;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      width:52px; height:52px;
+      border-radius:50%;
+      padding:0;
+      border:1px solid var(--card-border);
+      background:var(--card);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      cursor:pointer;
+      overflow:hidden;
+      transition:border-color .25s var(--ease), box-shadow .25s var(--ease), transform .15s var(--ease);
+    }
+    .mp-collapsed:hover{transform:translateY(-1px) scale(1.03);}
+    .mini-player.logged-in.collapsed .mp-collapsed{
+      display:flex;
+      animation:mpPopIn .3s var(--ease);
+    }
+    .mp-collapsed:has(.mp-bars-sm.playing){
+      border-color:color-mix(in srgb, var(--ok) 55%, var(--card-border));
+      box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 3px color-mix(in srgb, var(--ok) 18%, transparent);
+      animation:mpPopIn .3s var(--ease), mpGlow 2.4s ease-in-out infinite;
+    }
+    @keyframes mpGlow{
+      0%,100%{box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 3px color-mix(in srgb, var(--ok) 14%, transparent);}
+      50%{box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 5px color-mix(in srgb, var(--ok) 26%, transparent);}
+    }
+    .mp-live-dot{
+      position:absolute;
+      top:3px; right:3px;
+      width:8px; height:8px;
+      border-radius:50%;
+      background:var(--ok);
+      border:1.5px solid var(--card);
+      opacity:0;
+      transition:opacity .2s var(--ease);
+    }
+    .mp-collapsed:has(.mp-bars-sm.playing) .mp-live-dot{opacity:1;}
+    .mp-art-sm{
+      width:100%; height:100%;
+      object-fit:cover;
+      background:var(--bg-alt);
+      display:block;
+      transition:transform .3s var(--ease);
+    }
+    .mp-collapsed:hover .mp-art-sm{transform:scale(1.08);}
+    .mp-mini-toggle{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px;
+      background:rgba(15,15,17,.35);
+      opacity:0;
+      transition:opacity .2s var(--ease);
+    }
+    .mp-collapsed:hover .mp-mini-toggle{opacity:1;}
+    .mp-bars-sm{
+      position:absolute; inset:0;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      gap:2px;
+      background:rgba(15,15,17,.3);
+    }
+    .mp-bars-sm.playing{display:flex;}
+
+    /* ---- Expanded card ---- */
+    .mp-body{
+      display:none;
+      align-items:center; gap:10px;
+      background:var(--card);
+      border:1px solid var(--card-border);
+      border-radius:var(--radius);
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      padding:10px;
+    }
+    .mini-player.logged-in:not(.collapsed) .mp-body{
+      display:flex;
+      animation:mpPopIn .3s var(--ease);
+    }
+
+    .mp-art-wrap{position:relative; flex-shrink:0; width:46px; height:46px; cursor:pointer; border-radius:8px; overflow:hidden;}
+    .mp-art{
+      width:46px; height:46px;
+      border-radius:8px;
+      object-fit:cover;
+      background:var(--bg-alt);
+      border:1px solid var(--card-border);
+      display:block;
+      transition:transform .35s var(--ease);
+    }
+    .mp-art-wrap:hover .mp-art{transform:scale(1.08) rotate(-2deg);}
+    .mp-bars{
+      position:absolute; inset:0;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      gap:3px;
+      background:rgba(15,15,17,.5);
+      border-radius:8px;
+    }
+    .mp-bars.playing{display:flex;}
+    .mp-bars span, .mp-bars-sm span{
+      width:3px;
+      background:var(--ink);
+      border-radius:2px;
+      height:5px;
+      animation:mpwave 2.6s ease-in-out infinite;
+    }
+    .mp-bars-sm span{width:2.5px;}
+    .mp-bars span:nth-child(1),.mp-bars-sm span:nth-child(1){animation-delay:0s;}
+    .mp-bars span:nth-child(2),.mp-bars-sm span:nth-child(2){animation-delay:.5s;}
+    .mp-bars span:nth-child(3),.mp-bars-sm span:nth-child(3){animation-delay:1s;}
+    .mp-bars span:nth-child(4),.mp-bars-sm span:nth-child(4){animation-delay:.25s;}
+    @keyframes mpwave{
+      0%,100%{height:4px;}
+      50%{height:11px;}
+    }
+    .mp-info{min-width:0; flex:1; cursor:default;}
+    .mp-title{
+      font-size:12.5px; font-weight:600;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .mp-artist{
+      font-size:11px; color:var(--ink-faint);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .mp-controls{display:flex; align-items:center; gap:0; flex-shrink:0;}
+    .mp-btn{
+      background:none; border:none; color:var(--ink);
+      font-size:14px; cursor:pointer; padding:6px;
+      border-radius:8px;
+      transition:background .15s var(--ease), opacity .15s var(--ease), transform .1s var(--ease);
+    }
+    .mp-btn:hover{background:var(--bg-alt);}
+    .mp-btn:active{transform:scale(.9);}
+    .mp-btn-main{
+      font-size:16px;
+      background:var(--bg-alt);
+      border:1px solid var(--card-border);
+    }
+    .mp-btn-main:hover{border-color:var(--card-border-hover);}
+    .mp-btn.active{opacity:1; color:var(--ok);}
+    #mp-shuffle-btn{opacity:.55;}
+    #mp-shuffle-btn.active{opacity:1;}
+    @media (prefers-reduced-motion: reduce){
+      .mp-bars span, .mp-bars-sm span{animation:none; height:8px;}
+    }
+  </style>
 </body>
 </html>
