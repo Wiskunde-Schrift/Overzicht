@@ -6,6 +6,13 @@
 <title>Parker Bergman · Studiehub</title>
 <meta name="description" content="Studiehub — Parker Bergman, 5G">
 <style>
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-group(*){
+    animation-duration: .45s;
+    animation-timing-function: cubic-bezier(.16,1,.3,1);
+  }
   :root{
     --bg:#0f0f11;
     --bg-alt:#151517;
@@ -48,7 +55,7 @@
     *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
   }
 
-  .wrap{max-width:820px; margin:0 auto; padding:0 20px 80px;}
+  .wrap{max-width:820px; margin:0 auto; padding:0 20px 80px; container-type:inline-size;}
 
   .hero{
     padding:56px 20px 40px;
@@ -73,13 +80,15 @@
     color:var(--ink);
   }
   .meta-row{
-    display:flex; flex-wrap:wrap; gap:10px 16px;
-    font-size:14px; color:var(--ink-dim);
+    display:flex; flex-direction:column; gap:3px;
   }
-  .meta-row span b{color:var(--ink); font-weight:600;}
-  .meta-row .sep{color:var(--ink-faint);}
-  .meta-row a{color:var(--ink); text-decoration:underline; text-decoration-color:var(--card-border-hover); text-underline-offset:3px;}
-  .meta-row a:hover{text-decoration-color:var(--ink);}
+  .meta-row .byline{font-size:14.5px; color:var(--ink-dim);}
+  .meta-row a{
+    font-size:13px; color:var(--ink-faint);
+    text-decoration:underline; text-decoration-color:var(--card-border-hover); text-underline-offset:3px;
+    width:fit-content;
+  }
+  .meta-row a:hover{color:var(--ink-dim); text-decoration-color:var(--ink-dim);}
 
   /* ---------------- PIN GATE ---------------- */
   .pin-card{
@@ -146,11 +155,34 @@
   #dashboard{display:none;}
   #dashboard.visible{
     display:block;
-    animation:fadeUp .55s var(--ease);
+    animation:dashboardIn .6s cubic-bezier(.16,1,.3,1);
   }
-  @keyframes fadeUp{
-    from{opacity:0; transform:translateY(14px);}
-    to{opacity:1; transform:translateY(0);}
+  @keyframes dashboardIn{
+    from{opacity:0; transform:translateY(24px) scale(.97); filter:blur(6px);}
+    to{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+  }
+
+  .pin-card.unlocking{
+    animation:pinOut .38s cubic-bezier(.5,0,.75,0) forwards;
+    pointer-events:none;
+  }
+  @keyframes pinOut{
+    from{opacity:1; transform:scale(1) translateY(0); filter:blur(0);}
+    to{opacity:0; transform:scale(.92) translateY(-10px); filter:blur(4px);}
+  }
+
+  /* Vaktegels komen gestaffeld 'van achteren naar voren' zweven */
+  .tile-grid .tile{
+    animation:tileIn .5s cubic-bezier(.16,1,.3,1) both;
+  }
+  .tile-grid .tile:nth-child(1){animation-delay:.08s;}
+  .tile-grid .tile:nth-child(2){animation-delay:.14s;}
+  .tile-grid .tile:nth-child(3){animation-delay:.20s;}
+  .tile-grid .tile:nth-child(4){animation-delay:.26s;}
+  .tile-grid .tile:nth-child(5){animation-delay:.32s;}
+  @keyframes tileIn{
+    from{opacity:0; transform:translateY(16px) scale(.96);}
+    to{opacity:1; transform:translateY(0) scale(1);}
   }
 
   /* ---------------- SETTINGS GEAR + DRAWER ---------------- */
@@ -190,7 +222,7 @@
     max-width:420px;
     background:var(--bg-alt);
     border-left:1px solid var(--card-border);
-    box-shadow:-12px 0 40px rgba(0,0,0,.35);
+    box-shadow:-4px 0 12px rgba(0,0,0,.4), -40px 0 80px rgba(0,0,0,.7);
     transform:translateX(100%);
     transition:transform .3s var(--ease);
     z-index:46;
@@ -248,24 +280,22 @@
   .link-btn .arrow{color:var(--ink-faint); font-size:16px; flex-shrink:0;}
 
   .section-label{
-    font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--ink-faint);
+    font-family:var(--font-body);
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink-dim);
     margin:0 0 14px;
-    display:flex;
-    align-items:center;
-    gap:10px;
+    padding-left:10px;
+    border-left:2px solid color-mix(in srgb, var(--accent) 55%, var(--card-border));
   }
-  .section-label::after{content:""; flex:1; height:1px; background:var(--card-border);}
+
 
   .tile-grid{
     display:grid;
     grid-template-columns:1fr;
     gap:12px;
   }
-  @media(min-width:560px){
+  @container (min-width:560px){
     .tile-grid{grid-template-columns:1fr 1fr;}
   }
 
@@ -289,6 +319,7 @@
     border-radius:12px;
     display:flex; align-items:center; justify-content:center;
     font-size:20px;
+    color:var(--tile-color, var(--ink));
     background:color-mix(in srgb, var(--tile-color, var(--ink)) 16%, var(--bg-alt));
     border:1px solid color-mix(in srgb, var(--tile-color, var(--ink)) 35%, var(--card-border));
   }
@@ -317,25 +348,44 @@
   /* ================= DIEPTE: schaduwlagen voor voor/achter-gevoel ================= */
   .pin-card{
     box-shadow:
-      0 1px 2px rgba(0,0,0,.35),
-      0 10px 28px -14px rgba(0,0,0,.6);
+      0 2px 4px rgba(0,0,0,.5),
+      0 30px 60px -16px rgba(0,0,0,.85),
+      inset 0 1px 0 rgba(255,255,255,.05);
   }
   .tile{
     box-shadow:
-      0 1px 2px rgba(0,0,0,.35),
-      0 10px 28px -14px rgba(0,0,0,.6);
+      0 2px 5px rgba(0,0,0,.5),
+      0 28px 56px -18px rgba(0,0,0,.85),
+      inset 0 1px 0 rgba(255,255,255,.05);
+    transition:border-color .2s var(--ease), background .2s var(--ease), transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s var(--ease);
   }
   a.tile:hover{
-    transform:translateY(-3px);
+    transform:translateY(-6px) scale(1.015);
     box-shadow:
-      0 2px 4px rgba(0,0,0,.4),
-      0 18px 36px -16px rgba(0,0,0,.65);
+      0 6px 14px rgba(0,0,0,.55),
+      0 40px 70px -20px rgba(0,0,0,.9),
+      inset 0 1px 0 rgba(255,255,255,.07);
   }
   .link-btn{
-    box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px -12px rgba(0,0,0,.55);
+    box-shadow:
+      0 2px 4px rgba(0,0,0,.45),
+      0 20px 42px -16px rgba(0,0,0,.8),
+      inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .gear-btn{
+    box-shadow: 0 6px 20px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.4);
   }
   .hero{
-    box-shadow: 0 30px 60px -40px rgba(0,0,0,.7);
+    box-shadow: 0 40px 70px -30px rgba(0,0,0,.85);
+  }
+  .card, .card-sub{
+    box-shadow:
+      0 2px 5px rgba(0,0,0,.5),
+      0 28px 56px -18px rgba(0,0,0,.85),
+      inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .section-label, h1, h2{
+    text-shadow:0 2px 8px rgba(0,0,0,.3);
   }
 
   /* ================= iPhone: voorkom automatisch inzoomen op formuliervelden ================= */
@@ -354,9 +404,8 @@
       <p class="eyebrow">Studiehub</p>
       <h1 class="name">Parker Bergman</h1>
       <div class="meta-row">
-        <span><b>Klas</b> 5G</span>
-        <span class="sep">·</span>
-        <span><b>E-mail</b> <a href="mailto:el128979@leerling.eligant.nl">el128979@leerling.eligant.nl</a></span>
+        <span class="byline">5G</span>
+        <a href="mailto:el128979@leerling.eligant.nl">el128979@leerling.eligant.nl</a>
       </div>
 
       <!-- PIN GATE -->
@@ -385,50 +434,45 @@
     <div id="dashboard">
 
       <div class="tile-grid">
-        <a class="tile" href="wiskunde.html" style="--tile-color:#eaeaea;">
+        <a class="tile" href="wiskunde.html" style="--tile-color:#eaeaea; view-transition-name:vt-wiskunde;">
           <div class="tile-icon">∑</div>
           <div class="tile-body">
             <div class="tile-title">Wiskunde</div>
             <div class="tile-sub">Deel 1 · hoofdstukken, abc-formule, cijfers</div>
           </div>
-          <div class="tile-arrow">→</div>
-        </a>
+          </a>
 
-        <a class="tile" href="biologie.html" style="--tile-color:#2ecc71;">
+        <a class="tile" href="biologie.html" style="--tile-color:#2ecc71; view-transition-name:vt-biologie;">
           <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3c0 5 10 5 10 10s-10 5-10 10M17 3c0 5-10 5-10 10s10 5 10 10"/><path d="M8.2 7h7.6M8.2 17h7.6"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Biologie</div>
             <div class="tile-sub">Thema's, Binas legenda, foutenlogboek</div>
           </div>
-          <div class="tile-arrow">→</div>
-        </a>
+          </a>
 
-        <a class="tile" href="scheikunde.html" style="--tile-color:#e74c3c;">
+        <a class="tile" href="scheikunde.html" style="--tile-color:#e74c3c; view-transition-name:vt-scheikunde;">
           <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3h4M11 3v6l-6 11a1.2 1.2 0 0 0 1.1 1.7h11.8a1.2 1.2 0 0 0 1.1-1.7L13 9V3"/><path d="M8.5 15h7"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Scheikunde</div>
             <div class="tile-sub">Hoofdstukken, mol- &amp; pH-rekenmachine, Binas legenda</div>
           </div>
-          <div class="tile-arrow">→</div>
-        </a>
+          </a>
 
-        <a class="tile" href="natuurkunde.html" style="--tile-color:#3498db;">
+        <a class="tile" href="natuurkunde.html" style="--tile-color:#3498db; view-transition-name:vt-natuurkunde;">
           <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Natuurkunde</div>
             <div class="tile-sub">Newton hoofdstukken, Binas legenda, eenheden omrekenen</div>
           </div>
-          <div class="tile-arrow">→</div>
-        </a>
+          </a>
 
-        <a class="tile" href="nederlands.html" style="--tile-color:#ffffff;">
+        <a class="tile" href="nederlands.html" style="--tile-color:#ffffff; view-transition-name:vt-nederlands;">
           <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5c-2-1.3-4.4-2-7-2v14c2.6 0 5 .7 7 2 2-1.3 4.4-2 7-2V3c-2.6 0-5 .7-7 2Z"/><path d="M12 5v14"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Nederlands</div>
             <div class="tile-sub">Leeslijst, alinea-opbouw, dyslexie-leesmodus</div>
           </div>
-          <div class="tile-arrow">→</div>
-        </a>
+          </a>
       </div>
 
     </div>
@@ -446,7 +490,6 @@
     <div class="link-grid">
       <a class="link-btn" id="cal-link" href="webcal://p172-caldav.icloud.com/published/2/MTYzNDc5ODA0MzkxNjM0N9_-1OcZvIWnJCn4CwXkRyIF_7WhnFHvpElqRX1YeYEiO7Nf1mIp0WhtVKTIkMxd3IAN0xZ4CItvsWEv2V32s0c">
         <span><span class="lbl">Koppel Apple Agenda</span><span class="sub">iCloud kalender-abonnement</span></span>
-        <span class="arrow">→</span>
       </a>
     </div>
   </aside>
@@ -473,16 +516,24 @@
   var pinError = document.getElementById("pin-error");
   var dashboard = document.getElementById("dashboard");
 
-  function unlock(){
-    pinCard.style.display = "none";
-    dashboard.classList.add("visible");
+  function unlock(animated){
+    if (animated){
+      pinCard.classList.add("unlocking");
+      setTimeout(function(){
+        pinCard.style.display = "none";
+        dashboard.classList.add("visible");
+      }, 360);
+    } else {
+      pinCard.style.display = "none";
+      dashboard.classList.add("visible");
+    }
     try { sessionStorage.setItem(SESSION_KEY, "true"); } catch(e){}
   }
 
-  // Herstel ontgrendelstatus binnen deze sessie
+  // Herstel ontgrendelstatus binnen deze sessie (zonder animatie, direct zichtbaar)
   try {
     if (sessionStorage.getItem(SESSION_KEY) === "true") {
-      unlock();
+      unlock(false);
     }
   } catch(e){}
 
@@ -491,7 +542,7 @@
     var val = pinInput.value.trim();
     if (val === PIN) {
       pinError.classList.remove("show", "shake");
-      unlock();
+      unlock(true);
     } else {
       pinError.classList.add("show");
       pinError.classList.remove("shake");
@@ -537,20 +588,22 @@
 
   <!-- ---------------- AI ASSISTENT (Gemini) ---------------- -->
   <div id="ai-widget" class="ai-widget">
-    <button class="ai-bubble" id="ai-bubble" type="button" aria-label="Open AI-assistent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg></button>
+    <div class="ai-shell" id="ai-shell">
+      <button class="ai-bubble" id="ai-bubble" type="button" aria-label="Open AI-assistent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg></button>
 
-    <div class="ai-panel" id="ai-panel">
-      <div class="ai-panel-header">
-        <span>Studie-assistent</span>
-        <button class="ai-close" id="ai-close-btn" type="button" aria-label="Sluiten">✕</button>
+      <div class="ai-panel" id="ai-panel">
+        <div class="ai-panel-header">
+          <span>Studie-assistent</span>
+          <button class="ai-close" id="ai-close-btn" type="button" aria-label="Sluiten">✕</button>
+        </div>
+        <div class="ai-messages" id="ai-messages">
+          <div class="ai-msg ai-msg-bot">Hoi! Waar kan ik je mee helpen bij het studeren?</div>
+        </div>
+        <form class="ai-input-row" id="ai-form" autocomplete="off">
+          <input class="ai-input" id="ai-input" type="text" placeholder="Stel een vraag..." aria-label="Bericht">
+          <button class="ai-send" id="ai-send-btn" type="submit" aria-label="Verstuur">➤</button>
+        </form>
       </div>
-      <div class="ai-messages" id="ai-messages">
-        <div class="ai-msg ai-msg-bot">Hoi! Waar kan ik je mee helpen bij het studeren?</div>
-      </div>
-      <form class="ai-input-row" id="ai-form" autocomplete="off">
-        <input class="ai-input" id="ai-input" type="text" placeholder="Stel een vraag..." aria-label="Bericht">
-        <button class="ai-send" id="ai-send-btn" type="submit" aria-label="Verstuur">➤</button>
-      </form>
     </div>
   </div>
 
@@ -572,7 +625,7 @@
 
   function openPanel(){
     widget.classList.add("open");
-    input.focus();
+    setTimeout(function(){ input.focus(); }, 420);
   }
   function closePanel(){
     widget.classList.remove("open");
@@ -1045,39 +1098,66 @@
       color:var(--ink);
       padding-bottom:env(safe-area-inset-bottom, 0px);
     }
-    .ai-bubble{
+
+    /* De 'shell' is de vorm die van bolletje naar chatvenster groeit */
+    .ai-shell{
+      position:relative;
       width:52px; height:52px;
       border-radius:50%;
       border:1px solid var(--card-border);
       background:var(--card);
-      color:var(--ink);
-      font-size:20px;
-      cursor:pointer;
-      box-shadow:0 8px 28px rgba(0,0,0,.45);
-      transition:transform .15s var(--ease), border-color .2s var(--ease);
+      box-shadow:0 8px 28px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.4);
+      overflow:hidden;
+      transition:
+        width .42s cubic-bezier(.16,1,.3,1),
+        height .42s cubic-bezier(.16,1,.3,1),
+        border-radius .42s cubic-bezier(.16,1,.3,1),
+        border-color .2s var(--ease),
+        box-shadow .3s var(--ease);
     }
-    .ai-bubble:hover{border-color:var(--card-border-hover); transform:translateY(-1px);}
-    .ai-widget.open .ai-bubble{display:none;}
-
-    .ai-panel{
-      display:none;
-      flex-direction:column;
+    .ai-widget.open .ai-shell{
       width:300px;
       max-width:calc(100vw - 32px);
       height:min(420px, 70vh);
-      background:var(--card);
-      border:1px solid var(--card-border);
       border-radius:var(--radius);
-      box-shadow:0 8px 28px rgba(0,0,0,.45);
-      overflow:hidden;
+      box-shadow:0 20px 50px rgba(0,0,0,.55), 0 4px 12px rgba(0,0,0,.4);
     }
-    .ai-widget.open .ai-panel{display:flex;}
+
+    .ai-bubble{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      width:100%; height:100%;
+      border:none; background:none;
+      color:var(--ink);
+      cursor:pointer;
+      transition:opacity .18s ease, transform .18s ease;
+    }
+    .ai-shell:hover .ai-bubble{transform:scale(1.06);}
+    .ai-widget.open .ai-bubble{
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .12s ease;
+    }
+
+    .ai-panel{
+      position:absolute; inset:0;
+      display:flex;
+      flex-direction:column;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .22s ease .16s;
+    }
+    .ai-widget.open .ai-panel{
+      opacity:1;
+      pointer-events:auto;
+    }
 
     .ai-panel-header{
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 14px;
       border-bottom:1px solid var(--card-border);
       font-size:13px; font-weight:600;
+      flex-shrink:0;
     }
     .ai-close{
       background:none; border:none; color:var(--ink-faint);
@@ -1185,7 +1265,7 @@
       font-weight:600;
       cursor:pointer;
       transition:opacity .15s var(--ease), transform .15s var(--ease);
-      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      box-shadow:0 3px 8px rgba(0,0,0,.5), 0 24px 48px -14px rgba(0,0,0,.85);
     }
     .mp-login:hover{opacity:.88; transform:translateY(-1px);}
 
@@ -1205,7 +1285,7 @@
       padding:0;
       border:1px solid var(--card-border);
       background:var(--card);
-      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      box-shadow:0 3px 8px rgba(0,0,0,.5), 0 24px 48px -14px rgba(0,0,0,.85);
       cursor:pointer;
       overflow:hidden;
       transition:border-color .25s var(--ease), box-shadow .25s var(--ease), transform .15s var(--ease);
@@ -1269,7 +1349,7 @@
       background:var(--card);
       border:1px solid var(--card-border);
       border-radius:var(--radius);
-      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      box-shadow:0 3px 8px rgba(0,0,0,.5), 0 24px 48px -14px rgba(0,0,0,.85);
       padding:10px;
     }
     .mini-player.logged-in:not(.collapsed) .mp-body{
@@ -1343,6 +1423,108 @@
     #mp-shuffle-btn.active{opacity:1;}
     @media (prefers-reduced-motion: reduce){
       .mp-bars span, .mp-bars-sm span{animation:none; height:8px;}
+    }
+  </style>
+
+  <!-- ================= ZIJBALK-LAYOUT (breed scherm) =================
+       Onder de 1100px-drempel verandert er niets: AI en Spotify blijven
+       de bestaande zwevende bolletjes die uitklappen. Vanaf 1100px
+       worden diezelfde elementen (zelfde HTML, zelfde JS, geen
+       functionele wijziging) vaste zijbalken over de volle hoogte,
+       en schuift de hoofdinhoud ertussenin. -->
+  <style>
+    @media (min-width:1100px){
+
+      body{
+        margin-left:320px;
+        margin-right:300px;
+      }
+
+      /* ---- Linkerzijbalk: AI-assistent ---- */
+      .ai-widget{
+        position:fixed;
+        left:0; top:0; bottom:0;
+        width:320px;
+        height:100dvh;
+        display:flex;
+        padding-bottom:0;
+        border-right:1px solid var(--card-border);
+        background:var(--bg-alt);
+      }
+      .ai-shell{
+        position:static;
+        width:100%; height:100%;
+        border-radius:0;
+        border:none;
+        background:none;
+        box-shadow:none;
+        display:flex;
+        flex-direction:column;
+      }
+      .ai-shell:hover .ai-bubble{transform:none;}
+      .ai-bubble{display:none;}
+      .ai-panel{
+        position:static;
+        width:100%; height:100%;
+        opacity:1;
+        pointer-events:auto;
+        transition:none;
+      }
+      .ai-panel-header{padding:18px 16px; font-size:13.5px;}
+      .ai-close{display:none;}
+
+      /* ---- Rechterzijbalk: Spotify ---- */
+      .mini-player{
+        position:fixed;
+        left:auto; right:0; top:0; bottom:0;
+        width:300px;
+        max-width:none;
+        height:100dvh;
+        padding:22px 18px;
+        padding-bottom:22px;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        border-left:1px solid var(--card-border);
+        background:var(--bg-alt);
+        opacity:1 !important;
+      }
+      .mini-player .mp-login{align-self:center;}
+
+      .mp-collapsed{display:none !important;}
+
+      .mini-player.logged-in .mp-body{
+        display:flex !important;
+        flex-direction:column;
+        align-items:stretch;
+        width:100%;
+        animation:none;
+        background:none;
+        border:none;
+        box-shadow:none;
+        padding:0;
+      }
+      .mini-player .mp-art-wrap{
+        width:100%; height:auto;
+        aspect-ratio:1;
+      }
+      .mini-player .mp-art{width:100%; height:100%;}
+      .mini-player .mp-info{
+        text-align:center;
+        margin-top:14px;
+        cursor:default;
+      }
+      .mini-player .mp-title{white-space:normal; font-size:14px;}
+      .mini-player .mp-artist{white-space:normal; font-size:12.5px; margin-top:2px;}
+      .mini-player .mp-controls{
+        justify-content:center;
+        gap:8px;
+        margin-top:16px;
+      }
+
+      /* ---- Instellingen-tandwiel: opzij van de rechterzijbalk, niet erop ---- */
+      .gear-btn{right:318px;}
+      .settings-drawer{right:300px;}
     }
   </style>
 
