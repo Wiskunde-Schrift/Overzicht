@@ -9,9 +9,21 @@
   @view-transition {
     navigation: auto;
   }
-  ::view-transition-group(*){
-    animation-duration: .45s;
+  /* Chrome's default mix-blend-mode:plus-lighter is bedoeld voor lichte
+     achtergronden; op een bijna-zwarte achtergrond zorgt dat voor een
+     wassig/abrupt effect in plaats van een vloeiende overgang. */
+  ::view-transition-old(*),
+  ::view-transition-new(*){
+    mix-blend-mode:normal;
     animation-timing-function: cubic-bezier(.16,1,.3,1);
+  }
+  ::view-transition-group(*){
+    animation-duration: .5s;
+    animation-timing-function: cubic-bezier(.16,1,.3,1);
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root){
+    animation-duration: .4s;
   }
   :root{
     --bg:#0f0f11;
@@ -183,6 +195,24 @@
   @keyframes tileIn{
     from{opacity:0; transform:translateY(16px) scale(.96);}
     to{opacity:1; transform:translateY(0) scale(1);}
+  }
+
+  /* Lichtflits op het moment van ontgrendelen */
+  .unlock-flash{
+    position:fixed; inset:0;
+    z-index:9998;
+    pointer-events:none;
+    background:radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--ink) 55%, transparent) 0%, transparent 60%);
+    opacity:0;
+    animation:unlockFlash .7s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  @keyframes unlockFlash{
+    0%{opacity:0; transform:scale(.6);}
+    18%{opacity:1; transform:scale(1);}
+    100%{opacity:0; transform:scale(1.5);}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .unlock-flash{display:none;}
   }
 
   /* ---------------- SETTINGS GEAR + DRAWER ---------------- */
@@ -519,15 +549,26 @@
   function unlock(animated){
     if (animated){
       pinCard.classList.add("unlocking");
+      showUnlockFlash();
       setTimeout(function(){
         pinCard.style.display = "none";
         dashboard.classList.add("visible");
+        document.body.classList.add("unlocked");
       }, 360);
     } else {
       pinCard.style.display = "none";
       dashboard.classList.add("visible");
+      document.body.classList.add("unlocked");
     }
     try { sessionStorage.setItem(SESSION_KEY, "true"); } catch(e){}
+  }
+
+  function showUnlockFlash(){
+    var flash = document.createElement("div");
+    flash.className = "unlock-flash";
+    document.body.appendChild(flash);
+    flash.addEventListener("animationend", function(){ flash.remove(); });
+    setTimeout(function(){ flash.remove(); }, 900);
   }
 
   // Herstel ontgrendelstatus binnen deze sessie (zonder animatie, direct zichtbaar)
@@ -1525,6 +1566,47 @@
       /* ---- Instellingen-tandwiel: opzij van de rechterzijbalk, niet erop ---- */
       .gear-btn{right:318px;}
       .settings-drawer{right:300px;}
+    }
+  </style>
+
+  <!-- ================= AI + SPOTIFY: pas zichtbaar na ontgrendelen =================
+       Hier expres helemaal onderaan geplaatst zodat deze regels in de cascade
+       na de bubbel- en zijbalk-stijlen komen en altijd winnen. -->
+  <style>
+    body:not(.unlocked) .ai-widget,
+    body:not(.unlocked) .mini-player{
+      display:none !important;
+    }
+
+    body.unlocked .ai-widget{
+      animation:widgetInLeft .65s cubic-bezier(.16,1,.3,1) .16s both;
+    }
+    body.unlocked .mini-player{
+      animation:widgetInRight .65s cubic-bezier(.16,1,.3,1) .24s both;
+    }
+    @keyframes widgetInLeft{
+      from{opacity:0; transform:translateX(-26px) scale(.9);}
+      to{opacity:1; transform:translateX(0) scale(1);}
+    }
+    @keyframes widgetInRight{
+      from{opacity:0; transform:translateX(26px) scale(.9);}
+      to{opacity:1; transform:translateX(0) scale(1);}
+    }
+    @media(min-width:1100px){
+      body.unlocked .ai-widget{animation-name:sidebarInLeft;}
+      body.unlocked .mini-player{animation-name:sidebarInRight;}
+    }
+    @keyframes sidebarInLeft{
+      from{opacity:0; transform:translateX(-100%);}
+      to{opacity:1; transform:translateX(0);}
+    }
+    @keyframes sidebarInRight{
+      from{opacity:0; transform:translateX(100%);}
+      to{opacity:1; transform:translateX(0);}
+    }
+    @media(prefers-reduced-motion:reduce){
+      body.unlocked .ai-widget,
+      body.unlocked .mini-player{animation:none;}
     }
   </style>
 
