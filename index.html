@@ -61,6 +61,7 @@
     min-height:100dvh;
   }
   a{color:inherit;}
+  ::selection{background:var(--accent-soft); color:var(--ink);}
   :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:6px;}
 
   @media (prefers-reduced-motion: reduce){
@@ -355,7 +356,7 @@
   }
   .tile-body{min-width:0; flex:1;}
   .tile-title{font-weight:600; font-size:15.5px; margin-bottom:2px;}
-  .tile-sub{font-size:12.5px; color:var(--ink-faint);}
+  .tile-sub{font-size:12.5px; color:var(--ink-faint); text-wrap:pretty;}
   .tile-arrow{color:var(--ink-faint); font-size:17px; flex-shrink:0;}
 
   .tile.soon{
@@ -405,10 +406,7 @@
   .gear-btn{
     box-shadow: 0 6px 20px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.4);
   }
-  .hero{
-    box-shadow: 0 40px 70px -30px rgba(0,0,0,.85);
-  }
-  .card, .card-sub{
+  .card{
     box-shadow:
       0 2px 5px rgba(0,0,0,.5),
       0 28px 56px -18px rgba(0,0,0,.85),
@@ -468,7 +466,7 @@
           <div class="tile-icon">∑</div>
           <div class="tile-body">
             <div class="tile-title">Wiskunde</div>
-            <div class="tile-sub">Deel 1 · hoofdstukken, abc-formule, cijfers</div>
+            <div class="tile-sub">Hoofdstukken, abc-formule en cijfers</div>
           </div>
           </a>
 
@@ -484,7 +482,7 @@
           <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3h4M11 3v6l-6 11a1.2 1.2 0 0 0 1.1 1.7h11.8a1.2 1.2 0 0 0 1.1-1.7L13 9V3"/><path d="M8.5 15h7"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Scheikunde</div>
-            <div class="tile-sub">Hoofdstukken, mol- &amp; pH-rekenmachine, Binas legenda</div>
+            <div class="tile-sub">Hoofdstukken, mol- en pH-rekenmachine</div>
           </div>
           </a>
 
@@ -492,7 +490,7 @@
           <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Natuurkunde</div>
-            <div class="tile-sub">Newton hoofdstukken, Binas legenda, eenheden omrekenen</div>
+            <div class="tile-sub">Newton-hoofdstukken en eenheden omrekenen</div>
           </div>
           </a>
 
@@ -500,7 +498,7 @@
           <div class="tile-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5c-2-1.3-4.4-2-7-2v14c2.6 0 5 .7 7 2 2-1.3 4.4-2 7-2V3c-2.6 0-5 .7-7 2Z"/><path d="M12 5v14"/></svg></div>
           <div class="tile-body">
             <div class="tile-title">Nederlands</div>
-            <div class="tile-sub">Leeslijst, alinea-opbouw, dyslexie-leesmodus</div>
+            <div class="tile-sub">Leeslijst, alinea-opbouw en dyslexiemodus</div>
           </div>
           </a>
       </div>
@@ -1569,12 +1567,15 @@
     }
   </style>
 
-  <!-- ================= AI + SPOTIFY: pas zichtbaar na ontgrendelen =================
+  <!-- ================= AI + SPOTIFY + INSTELLINGEN: pas zichtbaar na ontgrendelen =================
        Hier expres helemaal onderaan geplaatst zodat deze regels in de cascade
        na de bubbel- en zijbalk-stijlen komen en altijd winnen. -->
   <style>
     body:not(.unlocked) .ai-widget,
-    body:not(.unlocked) .mini-player{
+    body:not(.unlocked) .mini-player,
+    body:not(.unlocked) .gear-btn,
+    body:not(.unlocked) .settings-drawer,
+    body:not(.unlocked) .settings-backdrop{
       display:none !important;
     }
 
@@ -1583,6 +1584,13 @@
     }
     body.unlocked .mini-player{
       animation:widgetInRight .65s cubic-bezier(.16,1,.3,1) .24s both;
+    }
+    body.unlocked .gear-btn{
+      animation:gearIn .5s cubic-bezier(.16,1,.3,1) .3s both;
+    }
+    @keyframes gearIn{
+      from{opacity:0; transform:scale(.7) rotate(-35deg);}
+      to{opacity:1; transform:scale(1) rotate(0deg);}
     }
     @keyframes widgetInLeft{
       from{opacity:0; transform:translateX(-26px) scale(.9);}
@@ -1606,7 +1614,8 @@
     }
     @media(prefers-reduced-motion:reduce){
       body.unlocked .ai-widget,
-      body.unlocked .mini-player{animation:none;}
+      body.unlocked .mini-player,
+      body.unlocked .gear-btn{animation:none;}
     }
   </style>
 
