@@ -1480,8 +1480,11 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
     </div>
   </div>
 
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+
   <!-- ---------------- FLOATING MINI PLAYER ---------------- -->
   <div id="mini-player" class="mini-player">
+   <div class="mp-sidebar-content">
     <button class="mp-login" id="mp-login-btn" type="button">Log in met Spotify</button>
 
     <!-- Collapsed: alleen hoes + play/pauze -->
@@ -1490,7 +1493,7 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
       <div class="mp-bars mp-bars-sm" id="mp-bars-sm">
         <span></span><span></span><span></span><span></span>
       </div>
-      <span class="mp-mini-toggle" id="mp-mini-toggle">▶︎</span>
+      <span class="mp-mini-toggle" id="mp-mini-toggle"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5.3c0-1 1.1-1.6 2-1l11 6.7c.9.5.9 1.8 0 2.3L9 20c-.9.6-2 0-2-1V5.3z"/></svg></span>
       <span class="mp-live-dot" aria-hidden="true"></span>
     </button>
 
@@ -1507,12 +1510,13 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
         <div class="mp-artist" id="mp-artist">—</div>
       </div>
       <div class="mp-controls">
-        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle">&#8646;</button>
-        <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige">⏮</button>
-        <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren">▶︎</button>
-        <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende">⏭</button>
+        <button class="mp-btn" id="mp-shuffle-btn" type="button" aria-label="Shuffle" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M3 6h3.5c1.6 0 3 .9 3.8 2.3L14 15.7c.8 1.4 2.2 2.3 3.8 2.3H21"/><path d="M17.5 3.5 21 6l-3.5 2.5M17.5 15.5 21 18l-3.5 2.5"/><path d="M3 18h3.5c1.6 0 3-.9 3.8-2.3l.7-1.2"/></svg></button>
+        <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige"><svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M7 6a1 1 0 0 1 2 0v12a1 1 0 0 1-2 0V6zm3.4 6L19 6.2c.9-.6 2 0 2 1V16.8c0 1-1.1 1.6-2 1L10.4 12.8a1.2 1.2 0 0 1 0-1.6z"/></svg></button>
+        <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5.3c0-1 1.1-1.6 2-1l11 6.7c.9.5.9 1.8 0 2.3L9 20c-.9.6-2 0-2-1V5.3z"/></svg></button>
+        <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende"><svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M17 6a1 1 0 0 0-2 0v12a1 1 0 0 0 2 0V6zm-3.4 6L5 6.2c-.9-.6-2 0-2 1V16.8c0 1 1.1 1.6 2 1l8.6-5.4a1.2 1.2 0 0 0 0-1.6z"/></svg></button>
       </div>
     </div>
+   </div>
   </div>
 
 <script>
@@ -1685,9 +1689,9 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
 
   function setPlayingUI(playing){
     isPlaying = playing;
-    var icon = playing ? "⏸" : "▶︎";
-    toggleBtn.textContent = icon;
-    mpMiniToggle.textContent = icon;
+    var icon = playing ? '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="5" width="4.5" height="14" rx="1"/><rect x="13.5" y="5" width="4.5" height="14" rx="1"/></svg>' : '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5.3c0-1 1.1-1.6 2-1l11 6.7c.9.5.9 1.8 0 2.3L9 20c-.9.6-2 0-2-1V5.3z"/></svg>';
+    toggleBtn.innerHTML = icon;
+    mpMiniToggle.innerHTML = icon;
     mpBars.classList.toggle("playing", playing);
     mpBarsSm.classList.toggle("playing", playing);
   }
@@ -1950,7 +1954,6 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
     .mp-mini-toggle{
       position:absolute; inset:0;
       display:flex; align-items:center; justify-content:center;
-      font-size:16px;
       background:rgba(15,15,17,.35);
       opacity:0;
       transition:opacity .2s var(--ease);
@@ -2029,8 +2032,9 @@ var pageDocRef = doc(db, "studiehub", "nederlands");
     }
     .mp-controls{display:flex; align-items:center; gap:0; flex-shrink:0;}
     .mp-btn{
+      display:inline-flex; align-items:center; justify-content:center;
       background:none; border:none; color:var(--ink);
-      font-size:14px; cursor:pointer; padding:6px;
+      cursor:pointer; padding:6px;
       border-radius:8px;
       transition:background .15s var(--ease), opacity .15s var(--ease), transform .1s var(--ease);
     }
