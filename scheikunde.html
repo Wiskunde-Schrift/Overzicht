@@ -981,10 +981,12 @@ var pageDocRef = doc(db, "studiehub", "scheikunde");
       setTimeout(function(){
         pinCard.style.display = "none";
         dashboard.classList.add("visible");
+        document.body.classList.add("unlocked");
       }, 360);
     } else {
       pinCard.style.display = "none";
       dashboard.classList.add("visible");
+      document.body.classList.add("unlocked");
     }
     try { sessionStorage.setItem(SESSION_KEY, "true"); } catch(e){}
   }
@@ -2630,5 +2632,32 @@ var pageDocRef = doc(db, "studiehub", "scheikunde");
       .mp-bars span, .mp-bars-sm span{animation:none; height:8px;}
     }
   </style>
+  <!-- ================= AI + SPOTIFY: pas zichtbaar na ontgrendelen ================= -->
+  <style>
+    body:not(.unlocked) .ai-widget,
+    body:not(.unlocked) .mini-player{
+      display:none !important;
+    }
+    body.unlocked .ai-widget{
+      animation:widgetInLeft .65s cubic-bezier(.16,1,.3,1) .16s both;
+    }
+    body.unlocked .mini-player{
+      animation:widgetInRight .65s cubic-bezier(.16,1,.3,1) .24s both;
+    }
+    @keyframes widgetInLeft{
+      from{opacity:0; transform:translateX(-26px) scale(.9);}
+      to{opacity:1; transform:translateX(0) scale(1);}
+    }
+    @keyframes widgetInRight{
+      from{opacity:0; transform:translateX(26px) scale(.9);}
+      to{opacity:1; transform:translateX(0) scale(1);}
+    }
+    @media(prefers-reduced-motion:reduce){
+      body.unlocked .ai-widget,
+      body.unlocked .mini-player{animation:none;}
+    }
+  </style>
+
 </body>
 </html>
+
