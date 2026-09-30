@@ -299,6 +299,14 @@
   .plan-chip.moeilijk{background:#e0a13d; border-color:#e0a13d; color:#0f0f11; font-weight:700;}
 
   /* Aankomende afspraken */
+  .countdown-banner{
+    margin:-6px 0 14px;
+    font-size:13px;
+    color:var(--ink-dim);
+    display:none;
+  }
+  .countdown-banner.show{display:block;}
+  .countdown-banner b{color:var(--accent); font-weight:700;}
   .agenda-header{
     display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
     flex-wrap:wrap;
@@ -716,6 +724,7 @@
       <!-- A2. AANKOMENDE AFSPRAKEN (gedeeld met de andere vakpagina's — zelfde agenda.json) -->
       <section class="block">
         <p class="section-label">Aankomende afspraken</p>
+        <p class="countdown-banner" id="countdown-banner"></p>
         <div class="card">
           <div class="agenda-header">
             <p class="card-sub" style="margin:0;">
@@ -1680,6 +1689,26 @@ var pageDocRef = doc(db, "studiehub", "natuurkunde");
 
       agendaList.appendChild(li);
     });
+
+    updateCountdownBanner(combined);
+  }
+
+  function updateCountdownBanner(combined){
+    var banner = document.getElementById("countdown-banner");
+    if (!banner) return;
+    var todayStr = new Date().toISOString().slice(0, 10);
+    var upcoming = combined.filter(function(item){
+      return item.date && item.date >= todayStr;
+    });
+    if (!upcoming.length){
+      banner.classList.remove("show");
+      return;
+    }
+    var next = upcoming[0];
+    var days = Math.round((new Date(next.date) - new Date(todayStr)) / 86400000);
+    var when = days === 0 ? "vandaag" : days === 1 ? "morgen" : "over " + days + " dagen";
+    banner.innerHTML = "Eerstvolgende: <b>" + next.title + "</b> \u2014 " + when;
+    banner.classList.add("show");
   }
 
   function addManualItem(){
@@ -2049,7 +2078,7 @@ var pageDocRef = doc(db, "studiehub", "natuurkunde");
     <!-- Uitgeklapt: volledige bediening -->
     <div class="mp-body" id="mp-body">
       <div class="mp-art-wrap">
-        <img class="mp-art" id="mp-art" src="" alt="">
+        <img class="mp-art" id="mp-art" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="">
         <div class="mp-bars" id="mp-bars">
           <span></span><span></span><span></span><span></span>
         </div>
@@ -2063,6 +2092,12 @@ var pageDocRef = doc(db, "studiehub", "natuurkunde");
         <button class="mp-btn" id="mp-prev-btn" type="button" aria-label="Vorige" title="Vorige"><svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M7 6a1 1 0 0 1 2 0v12a1 1 0 0 1-2 0V6zm3.4 6L19 6.2c.9-.6 2 0 2 1V16.8c0 1-1.1 1.6-2 1L10.4 12.8a1.2 1.2 0 0 1 0-1.6z"/></svg></button>
         <button class="mp-btn mp-btn-main" id="mp-toggle-btn" type="button" aria-label="Afspelen" title="Afspelen/pauzeren"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5.3c0-1 1.1-1.6 2-1l11 6.7c.9.5.9 1.8 0 2.3L9 20c-.9.6-2 0-2-1V5.3z"/></svg></button>
         <button class="mp-btn" id="mp-next-btn" type="button" aria-label="Volgende" title="Volgende"><svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M17 6a1 1 0 0 0-2 0v12a1 1 0 0 0 2 0V6zm-3.4 6L5 6.2c-.9-.6-2 0-2 1V16.8c0 1 1.1 1.6 2 1l8.6-5.4a1.2 1.2 0 0 0 0-1.6z"/></svg></button>
+      </div>
+
+      <div class="mp-pomodoro" id="mp-pomodoro">
+        <span class="mp-pomodoro-label" id="pomodoro-label">Focus</span>
+        <span class="mp-pomodoro-time" id="pomodoro-time">25:00</span>
+        <button class="mp-pomodoro-btn" id="pomodoro-btn" type="button">Start</button>
       </div>
     </div>
    </div>
@@ -2257,7 +2292,10 @@ var pageDocRef = doc(db, "studiehub", "natuurkunde");
     var art = track.album && track.album.images && track.album.images.length
       ? track.album.images[track.album.images.length - 1].url
       : "";
-    if (art){ mpArt.src = art; mpArtSm.src = art; }
+    if (art){
+      mpArt.src = art; mpArtSm.src = art;
+      if (mpArtWrap) mpArtWrap.classList.add("has-track");
+    }
   }
 
   /* ---------- Idle fade: valt rustig weg als je niks aanraakt ---------- */
@@ -2388,6 +2426,72 @@ var pageDocRef = doc(db, "studiehub", "natuurkunde");
   prevBtn.addEventListener("click", prevTrack);
   nextBtn.addEventListener("click", nextTrack);
   shuffleBtn.addEventListener("click", toggleShuffle);
+
+  /* ---------- Pomodoro-timer, gekoppeld aan de muziek ---------- */
+  var pomodoroEl = document.getElementById("mp-pomodoro");
+  var pomodoroLabel = document.getElementById("pomodoro-label");
+  var pomodoroTime = document.getElementById("pomodoro-time");
+  var pomodoroBtn = document.getElementById("pomodoro-btn");
+
+  var POMODORO_WORK = 25 * 60;
+  var POMODORO_BREAK = 5 * 60;
+  var pomodoroSecondsLeft = POMODORO_WORK;
+  var pomodoroRunning = false;
+  var pomodoroOnBreak = false;
+  var pomodoroInterval = null;
+
+  function pomodoroFormat(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function pomodoroPlayMusic(){
+    if (!startedOnce){ startPlaylist(); return; }
+    if (player && player.resume) player.resume().catch(function(){});
+  }
+  function pomodoroPauseMusic(){
+    if (player && player.pause) player.pause().catch(function(){});
+  }
+
+  function pomodoroUpdateUI(){
+    pomodoroTime.textContent = pomodoroFormat(pomodoroSecondsLeft);
+    pomodoroLabel.textContent = pomodoroOnBreak ? "Pauze" : "Focus";
+    pomodoroEl.classList.toggle("on", pomodoroRunning && !pomodoroOnBreak);
+    pomodoroEl.classList.toggle("break", pomodoroOnBreak);
+    pomodoroBtn.textContent = pomodoroRunning ? "Stop" : "Start";
+  }
+
+  function pomodoroTick(){
+    pomodoroSecondsLeft--;
+    if (pomodoroSecondsLeft <= 0){
+      pomodoroOnBreak = !pomodoroOnBreak;
+      pomodoroSecondsLeft = pomodoroOnBreak ? POMODORO_BREAK : POMODORO_WORK;
+      if (pomodoroOnBreak) pomodoroPauseMusic(); else pomodoroPlayMusic();
+    }
+    pomodoroUpdateUI();
+  }
+
+  function pomodoroStart(){
+    pomodoroRunning = true;
+    pomodoroOnBreak = false;
+    pomodoroSecondsLeft = POMODORO_WORK;
+    pomodoroPlayMusic();
+    pomodoroUpdateUI();
+    pomodoroInterval = setInterval(pomodoroTick, 1000);
+  }
+
+  function pomodoroStop(){
+    pomodoroRunning = false;
+    pomodoroOnBreak = false;
+    pomodoroSecondsLeft = POMODORO_WORK;
+    clearInterval(pomodoroInterval);
+    pomodoroUpdateUI();
+  }
+
+  pomodoroBtn.addEventListener("click", function(){
+    if (pomodoroRunning) pomodoroStop(); else pomodoroStart();
+  });
 
   collapsedBtn.addEventListener("click", function(e){
     e.stopPropagation();
@@ -2522,23 +2626,65 @@ var pageDocRef = doc(db, "studiehub", "natuurkunde");
     .mp-body{
       display:none;
       align-items:center; gap:10px;
+      flex-wrap:wrap;
       background:var(--card);
       border:1px solid var(--card-border);
       border-radius:var(--radius);
       box-shadow:0 3px 8px rgba(0,0,0,.5), 0 24px 48px -14px rgba(0,0,0,.85);
       padding:10px;
     }
+    .mp-pomodoro{
+      display:flex; align-items:center; gap:8px;
+      width:100%;
+      margin-top:4px;
+      padding-top:8px;
+      border-top:1px solid var(--card-border);
+      font-size:12px;
+    }
+    .mp-pomodoro-label{color:var(--ink-faint); flex-shrink:0;}
+    .mp-pomodoro-time{
+      font-family:var(--font-mono);
+      color:var(--ink);
+      font-weight:600;
+      flex:1;
+    }
+    .mp-pomodoro-btn{
+      background:var(--bg-alt);
+      border:1px solid var(--card-border);
+      color:var(--ink);
+      border-radius:var(--radius-sm);
+      padding:5px 12px;
+      font-size:12px;
+      cursor:pointer;
+      transition:border-color .2s var(--ease);
+      flex-shrink:0;
+    }
+    .mp-pomodoro-btn:hover{border-color:var(--card-border-hover);}
+    .mp-pomodoro.on .mp-pomodoro-time{color:var(--accent);}
+    .mp-pomodoro.break .mp-pomodoro-time{color:var(--ok);}
     .mini-player.logged-in:not(.collapsed) .mp-body{
       display:flex;
       animation:mpPopIn .3s var(--ease);
     }
 
     .mp-art-wrap{position:relative; flex-shrink:0; width:46px; height:46px; cursor:pointer; border-radius:8px; overflow:hidden;}
+    .mp-art-wrap::before{
+      content:"";
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:var(--bg-alt);
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='22' height='22' fill='none' stroke='%236c6c78' stroke-width='1.6'%3E%3Cpath d='M9 18V5l11-2v13'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Ccircle cx='17' cy='16' r='3'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:center;
+      border-radius:8px;
+    }
+    .mp-art-wrap.has-track::before{display:none;}
     .mp-art{
+      position:relative;
       width:46px; height:46px;
       border-radius:8px;
       object-fit:cover;
-      background:var(--bg-alt);
+      background:transparent;
       border:1px solid var(--card-border);
       display:block;
       transition:transform .35s var(--ease);
