@@ -1,10 +1,35 @@
 {
-  "generated_at": "2026-10-25T18:10:30.341826+00:00",
+  "generated_at": "2026-10-25T21:28:07.859518+00:00",
   "events": [
     {
       "title": "scheikunde toets ",
       "date": "2026-10-29",
       "time": "08:00"
+    },
+    {
+      "title": "Driehoeksgesprek 2 (week van de driehoeksgesprekken)",
+      "date": "2026-12-02",
+      "time": null
+    },
+    {
+      "title": "Kerstvakantie",
+      "date": "2026-12-21",
+      "time": null
+    },
+    {
+      "title": "Ontwikkeldag",
+      "date": "2027-01-04",
+      "time": null
+    },
+    {
+      "title": "Driehoeksgesprek 3 (week van de driehoeksgesprekken)",
+      "date": "2027-02-18",
+      "time": null
+    },
+    {
+      "title": "Voorjaarsvakantie",
+      "date": "2027-02-22",
+      "time": null
     }
   ]
 }
