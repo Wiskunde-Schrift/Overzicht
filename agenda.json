@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T22:57:12.237764+00:00",
+  "generated_at": "2026-11-26T04:48:55.029226+00:00",
   "events": [
     {
       "title": "Driehoeksgesprek 2 (week van de driehoeksgesprekken)",
@@ -99,6 +99,11 @@
     {
       "title": "Lesvrije dag",
       "date": "2027-03-08",
+      "time": null
+    },
+    {
+      "title": "Goede Vrijdag en Pasen",
+      "date": "2027-03-26",
       "time": null
     }
   ]
